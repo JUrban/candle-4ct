@@ -341,9 +341,11 @@ let cv_tr_step extra tm =
     let x,y = dest_eq t in
     SPECL [x;y] (MATCH_MP (ISPEC (cv_enc_of (type_of x)) CV_TR_EQ)
                           (cv_inj_of (type_of x))) else
-  if e = `cv_of_bool` then
-    (try cv_try_rewr cv_bool_ops tm with Failure _ -> extra tm) else
-  if e = cexp_num_tm && (try cv_try_rewr cv_num_ops tm; true with Failure _ -> false) then
+  if e = `cv_of_bool` && (try ignore(cv_try_rewr cv_bool_ops tm); true
+                          with Failure _ -> false) then
+    cv_try_rewr cv_bool_ops tm else
+  if e = cexp_num_tm && (try ignore(cv_try_rewr cv_num_ops tm); true
+                         with Failure _ -> false) then
     cv_try_rewr cv_num_ops tm else
   if is_const h && (fst(dest_const h) = "FST" || fst(dest_const h) = "SND") && length args = 1 then
     let p = hd args in
@@ -487,7 +489,8 @@ let rec cv_tuple ts = match ts with
 let cv_field_paths ty c p =
   let m = length (fst(splitlist dest_fun_ty (type_of c))) in
   let rec fields q m = if m = 1 then [q] else mk_cfst q :: fields (mk_csnd q) (m-1) in
-  if ty = `:num` then [list_mk_comb(`Cexp_sub`, [p; mk_cnum 1])]
+  if ty = `:num` then
+    (if c = `0` then [] else [list_mk_comb(`Cexp_sub`, [p; mk_cnum 1])])
   else if ty = bool_ty then []
   else if fst(dest_type ty) = "prod" then [mk_cfst p; mk_csnd p]
   else
@@ -613,12 +616,29 @@ let cv_add_size_facts : tactic = fun (asl,w) ->
                             else SPEC (rand t) CSS_SND_LE) fs in
   MAP_EVERY MP_TAC facts (asl,w);;
 
+let cv_measure_rw () =
+  [cexp_fst_def; cexp_snd_def; CEXP_ISPAIR_CLAUSES; cval_sum_size_def;
+   injectivity "cval"; distinctness "cval"; GSYM (distinctness "cval");
+   CEXP_EQ_NUM; CEXP_LESS_NUM; cexp_sub_def; NOT_SUC; GSYM NOT_SUC;
+   cexp_add_def];;
+
+(* split the cval variables x occurring as Cexp_ispair x (or as the subject *)
+(* of a numeric test) in the goal, repeatedly                                *)
+let rec cv_split_ispair_tac depth : tactic = fun (asl,w) ->
+  if depth = 0 then ALL_TAC (asl,w) else
+  let cands = find_terms (fun t -> is_comb t && rator t = cexp_ispair_tm &&
+                                   is_var (rand t)) w in
+  match cands with
+    [] -> ALL_TAC (asl,w)
+  | t::_ ->
+     (STRUCT_CASES_TAC (SPEC (rand t) (cases "cval")) THEN
+      REWRITE_TAC (cv_measure_rw ()) THEN
+      cv_split_ispair_tac (depth - 1)) (asl,w);;
+
 let cv_measure_tac v : tactic =
   STRUCT_CASES_TAC (SPEC v (cases "cval")) THEN
-  REWRITE_TAC[cexp_fst_def; cexp_snd_def; CEXP_ISPAIR_CLAUSES; cval_sum_size_def;
-              injectivity "cval"; distinctness "cval";
-              GSYM (distinctness "cval");
-              CEXP_EQ_NUM; CEXP_LESS_NUM; cexp_sub_def; NOT_SUC; GSYM NOT_SUC] THEN
+  REWRITE_TAC (cv_measure_rw ()) THEN
+  cv_split_ispair_tac 4 THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[cval_sum_size_def] THEN
   cv_add_size_facts THEN ARITH_TAC;;
 
@@ -813,8 +833,13 @@ let rec cv_tree_tac f code_eq kopt tree : tactic = fun (asl,w) ->
 
 let cv_verbose = ref true;;
 
+let rec cv_clauses th =
+  flat (map (fun c -> let c = SPEC_ALL c in
+                      if is_conj (concl c) then cv_clauses c else [c])
+            (CONJUNCTS th));;
+
 let cv_translate_as cname0 th =
-  let cls = map cv_prep_clause (CONJUNCTS th) in
+  let cls = map cv_prep_clause (cv_clauses th) in
   let f,args0 = strip_comb (lhs (concl (hd cls))) in
   let fname = fst(dest_const f) in
   let n = length args0 in
@@ -878,3 +903,88 @@ let cv_translate_as cname0 th =
   corr;;
 
 let cv_translate th = cv_translate_as "" th;;
+
+(* ------------------------------------------------------------------------- *)
+(* Helpers for preparing clauses.                                            *)
+(* ------------------------------------------------------------------------- *)
+
+let cv_simp_thms () =
+  [NOT_CONS_NIL; GSYM NOT_CONS_NIL; HD; TL; CONS_11; COND_CLAUSES; NOT_SUC;
+   GSYM NOT_SUC; SUC_INJ; FST; SND; PAIR_EQ; option_DISTINCT; option_INJ;
+   GSYM option_DISTINCT] @
+  flat (map (fun (n,_) ->
+     (try [injectivity n] with Failure _ -> []) @
+     (try [distinctness n; GSYM (distinctness n)] with Failure _ -> []))
+     (filter (fun (n,_) -> not (n = "list") && not (n = "option")) (!cv_types)));;
+
+(* case-split argument i of a definition f x1 .. xn = rhs into constructor  *)
+(* clauses, simplifying each                                                 *)
+let cv_split_def i th =
+  let th = SPEC_ALL th in
+  let f,args = strip_comb (lhs (concl th)) in
+  let x = el i args in
+  let cons,_ = cv_type_cons (type_of x) in
+  let simp = cv_simp_thms () in
+  let clause c =
+    let zs = cv_con_args c in
+    let th1 = INST [list_mk_comb(c,zs), x] th in
+    GEN_ALL (CONV_RULE (RAND_CONV (REWRITE_CONV simp)) th1) in
+  end_itlist CONJ (map clause cons);;
+
+(* split argument i in every clause where it is a variable                   *)
+let cv_split_clauses i th =
+  end_itlist CONJ (map (fun c ->
+     let c' = SPEC_ALL c in
+     let a = el i (snd(strip_comb(lhs(concl c')))) in
+     if is_var a then cv_split_def i c' else c') (CONJUNCTS th));;
+
+(* register a 0-ary constant to be unfolded by its definition |- c = t       *)
+let cv_add_unfold th =
+  let c = lhs(concl th) in
+  cv_unfold := (fst(dest_const c), th) :: !cv_unfold;;
+
+(* ------------------------------------------------------------------------- *)
+(* Evaluation of a ground term by Kernel.compute:  |- t = value.             *)
+(* ------------------------------------------------------------------------- *)
+
+let rec cv_decode ty v =
+  if ty = `:num` then rand v
+  else if ty = bool_ty then (if rand v = `0` then `F` else `T`)
+  else
+    let name,args = dest_type ty in
+    if name = "prod" then
+      let l,b = dest_comb v in let a = rand l in
+      mk_pair(cv_decode (hd args) a, cv_decode (hd(tl args)) b)
+    else
+      let cons,_ = cv_type_cons ty in
+      let info c = assoc (fst(dest_const c)) (!cv_cons) in
+      let nulls = filter (fun c -> let _,_,_,ar,_ = info c in ar = 0) cons
+      and nons = filter (fun c -> let _,_,_,ar,_ = info c in ar > 0) cons in
+      let rec fields q m =
+        if m = 1 then [q] else
+        let l,r = dest_comb q in rand l :: fields r (m-1) in
+      let build c q =
+        let atys = fst(splitlist dest_fun_ty (type_of c)) in
+        let _,k,_,ar,na = info c in
+        let qs = if k = 1 && ar = 1 && na > 0 then [rand(rator q)]
+                 else fields q ar in
+        list_mk_comb(c, map2 cv_decode atys qs) in
+      if is_comb v && rator v = cexp_num_tm then
+        el (dest_small_numeral (rand v)) nulls
+      else if length nons = 1 then build (hd nons) v
+      else
+        let l,q = dest_comb v in
+        let tag = dest_small_numeral (rand (rand l)) in
+        build (el tag nons) q;;
+
+let cv_eval tm =
+  let ty = type_of tm in
+  let e = cv_enc_of ty in
+  let th1 = cv_tr (fun _ -> failwith "") (mk_comb(e, tm)) in
+  let th2 = compute (!cv_code) (rand(concl th1)) in
+  let v = rand(concl th2) in
+  let x = cv_decode ty v in
+  let th3 = PURE_REWRITE_CONV (!cv_enc_clauses @ [CV_OF_PROD_PAIR; CV_OF_BOOL_CLAUSES])
+              (mk_comb(e, x)) in
+  let inj = cv_inj_of ty in
+  EQ_MP (SPECL [tm; x] inj) (TRANS (TRANS th1 th2) (SYM th3));;

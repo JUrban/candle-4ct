@@ -25,7 +25,8 @@
 (* because the configuration sewn into a ring has darts of type A+num.       *)
 (* ========================================================================= *)
 
-needs "4CT/compute_fast.ml";;
+(* Candle: the CBV engine is the Compute module of Candle (compute.ml); *)
+(* 4CT/compute_fast.ml is only a faster copy of it.                      *)
 needs "4CT/sew.ml";;
 needs "4CT/revsnip_tail.ml";;
 needs "4CT/cpcolor_correct.ml";;
@@ -890,8 +891,8 @@ let add_def cs (name, th) =
     else (try Compute.add_thms [NUM_FORM th] cs
           with _ -> let (f,ar,pos) = suc_arg_info th in
                     Compute.add_conv (f, ar, suc_rec_conv th pos) cs;
-                      Printf.printf "suc_rec_conv %s\n%!" name)
-  with Failure s -> Printf.printf "SKIP %s: %s\n%!" name s;;
+                      print_string ("suc_rec_conv " ^ name ^ "\n"))
+  with Failure s -> print_string ("SKIP " ^ name ^ ": " ^ s ^ "\n");;
 
 let both_dirs th = CONJUNCTS th @ CONJUNCTS (CONV_RULE (ONCE_DEPTH_CONV
   SYM_CONV) th);;
@@ -1041,35 +1042,12 @@ let birkhoff_compset () =
                      CUBIC_STEP_CLAUSES]) cs;
   cs;;
 
-let the_birkhoff_compset = birkhoff_compset();;
+(* Candle: the four Birkhoff checks are proved by Kernel.compute through  *)
+(* the cv translations of 4CT_candle/birkhoff_cv.ml (statements as in the *)
+(* HOL Light development, which evaluates them with CBV_CONV).            *)
 
-(* Birkhoff_check h m (Coq birkhoff.v Birkhoff2..5): supply the iteration    *)
-(* count niter and the basis programs cps, then evaluate.                    *)
-let BIRKHOFF_CHECK_TAC cs niter cps =
-  REWRITE_TAC[birkhoff_check] THEN EXISTS_TAC (mk_small_numeral niter) THEN
-  EXISTS_TAC (mk_list(cps, `:cpstep list`)) THEN
-    CONV_TAC(Compute.CBV_CONV cs);;
+loads "4CT_candle/birkhoff_cv.ml";;
 
-let timed_birkhoff name tac =
-  let t0 = Sys.time() in
-  let th = prove(name, tac) in
-  Printf.printf "BIRKHOFF_EVAL: %s proved in %.1f s\n%!" (string_of_term
-    (concl th)) (Sys.time() -. t0); th;;
-
-let BIRKHOFF_CHECK_1_0 = timed_birkhoff `Birkhoff_check 1 0`
-  (BIRKHOFF_CHECK_TAC the_birkhoff_compset 1 [`[]:cpstep list`]);;
-
-let BIRKHOFF_CHECK_2_0 = timed_birkhoff `Birkhoff_check 2 0`
-  (BIRKHOFF_CHECK_TAC the_birkhoff_compset 1 [`[CpY]`]);;
-
-let BIRKHOFF_CHECK_3_0 = timed_birkhoff `Birkhoff_check 3 0`
-  (BIRKHOFF_CHECK_TAC the_birkhoff_compset 4 [`[CpU]`; `[CpR 1; CpU]`]);;
-
-let BIRKHOFF_CHECK_4_1 = timed_birkhoff `Birkhoff_check 4 1`
-  (BIRKHOFF_CHECK_TAC the_birkhoff_compset 10
-     [`[CpU; CpY]`; `[CpR 1; CpU; CpY]`; `[CpR 2; CpU; CpY]`; `[CpR 3; CpU;
-      CpY]`; `[CpR 4; CpU; CpY]`;
-      `[CpH; CpR 4; CpY; CpY; CpY]`]);;
 
 (* Gonthier's names Birkhoff2 .. Birkhoff5.                                  *)
 
