@@ -27,6 +27,7 @@
 (* (cv_tr_conv), which at the same time proves it correct.                   *)
 (* ========================================================================= *)
 
+let cv_verbose = ref true;;
 let cv_ty = `:cval`;;
 let cexp_num_tm = `Cexp_num` and cexp_pair_tm = `Cexp_pair`
 and cexp_fst_tm = `Cexp_fst` and cexp_snd_tm = `Cexp_snd`
@@ -875,7 +876,6 @@ let rec cv_tree_tac f code_eq kopt tree : tactic = fun (asl,w) ->
 (* The translator.                                                           *)
 (* ------------------------------------------------------------------------- *)
 
-let cv_verbose = ref true;;
 
 let rec cv_clauses th =
   flat (map (fun c -> let c = SPEC_ALL c in

@@ -10,7 +10,7 @@
 (* ========================================================================= *)
 
 needs "4CT/present.ml";;
-needs "4CT/redpart_eval.ml";;
+needs "4CT_candle/unavoid_cv.ml";;  (* Candle: was 4CT/redpart_eval.ml *)
 
 (* ------------------------------------------------------------------------- *)
 (* exclude5 .. exclude11 (Coq present5.v .. present11.v) come from           *)
@@ -18,7 +18,7 @@ needs "4CT/redpart_eval.ml";;
 (* interpreter.                                                              *)
 (* ------------------------------------------------------------------------- *)
 
-needs "4CT/presentations.ml";;
+needs "4CT_candle/presentations_cv.ml";;  (* Candle: was 4CT/presentations.ml *)
 
 (* ------------------------------------------------------------------------- *)
 (* The collating argument (Coq unavoidability.v:20-34).                      *)
