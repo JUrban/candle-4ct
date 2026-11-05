@@ -239,6 +239,7 @@ let cv_of_list_DEF = cv_register_type "list";;
 let cv_of_option_DEF = cv_register_type "option";;
 
 (* injectivity of an encoder, by induction                                   *)
+let cv_inj_of_ref = ref (fun (ty:hol_type) -> (failwith "cv_inj_of" : thm));;
 let cv_prove_inj tyname =
   let ty,cons,cth = cv_constructors tyname in
   let tvs = snd(dest_type ty) in
@@ -258,6 +259,12 @@ let cv_prove_inj tyname =
              (try [distinctness tyname] with Failure _ -> []) in
   let injs = injs @ (try map GSYM (CONJUNCTS (distinctness tyname))
                      with Failure _ -> []) in
+  let argtys = itlist (fun x acc -> if mem x acc then acc else x :: acc)
+                 (flat (map (fun c -> fst(splitlist dest_fun_ty (type_of c))) cons))
+                 [] in
+  let argtys = filter (fun t -> not (t = ty) && not (is_vartype t) &&
+                                not (mem t tvs)) argtys in
+  let injs = injs @ mapfilter (!cv_inj_of_ref) argtys in
   let th = prove(gl,
     (if hyps = [] then ALL_TAC else STRIP_TAC) THEN
     MATCH_MP_TAC ind THEN REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
@@ -294,6 +301,7 @@ let rec cv_inj_of ty =
       let th = INST (zip (map cv_enc_of args) olds) th in
       if args = [] then th
       else MP th (end_itlist CONJ (map cv_inj_of args));;
+cv_inj_of_ref := cv_inj_of;;
 
 (* ------------------------------------------------------------------------- *)
 (* Translation tables.                                                       *)
@@ -337,12 +345,19 @@ let cv_fix_encvars tm th =
   if evs = [] then th else
   INST (map (fun v -> (cv_enc_of (fst(dest_fun_ty (type_of v))), v)) evs) th;;
 
+let rec cv_cond_rator_conv t =
+  if is_cond (rator t) then REWR_CONV COND_RATOR t
+  else (RATOR_CONV cv_cond_rator_conv THENC REWR_CONV COND_RATOR) t;;
+
 let cv_tr_step extra tm =
   let e,t = dest_comb tm in
   if is_cond t then
     let c,(a,b) = dest_cond t in ISPECL [e;c;a;b] CV_TR_COND else
   if is_comb t && is_const (rator t) && fst(dest_const(rator t)) = "LET_END" then
     AP_TERM e (ISPEC (rand t) LET_END_DEF) else
+  if (let h,args = strip_comb t in
+      is_const h && fst(dest_const h) = "COND" && length args > 3) then
+    AP_TERM e (cv_cond_rator_conv t) else
   let h,args = strip_comb t in
   if is_const h && can (assoc (fst(dest_const h))) (!cv_con_clause) then
     PART_MATCH lhs (assoc (fst(dest_const h)) (!cv_con_clause)) tm else
@@ -736,7 +751,8 @@ let cv_define_code name cvf vs code k =
     let wfr = INST [r, rand(lhand(concl wfr))] wfr in
     let th0 = MP wfr (ISPEC m WF_MEASURE) in
     let th1 = ISPEC hh th0 in
-    (* admissibility *)
+    let _ = if !cv_verbose then print_string "[cl:adm]" else () in
+  (* admissibility *)
     let ff = mk_var("cvf1", type_of g) and gg = mk_var("cvg1", type_of g) in
     let z = mk_var("cvz", tupty) in
     let ihtm = mk_forall(z, mk_imp(list_mk_comb(r,[z;x]),
@@ -914,6 +930,19 @@ let cv_translate_as cname0 th =
                   (if recursive then " (recursive)" else "") ^ "\n");
   corr;;
 
+(* idempotent: an existing translation (by the name of its cv constant) is   *)
+(* returned again                                                            *)
+let cv_translate_as0 = cv_translate_as;;
+let cv_translate_as cname0 th =
+  let f = fst(strip_comb(lhs(concl(hd(cv_clauses th))))) in
+  let cname = if cname0 = "" then "cv_" ^ fst(dest_const f) else cname0 in
+  if can get_const_type cname then
+    (try snd (find (fun (_,th) ->
+            let r = rhs(snd(strip_forall(concl th))) in
+            fst(dest_const(fst(strip_comb r))) = cname) (!cv_fun_thms))
+     with Failure _ -> failwith ("cv_translate: " ^ cname ^ " exists"))
+  else cv_translate_as0 cname0 th;;
+
 let cv_translate th = cv_translate_as "" th;;
 
 (* ------------------------------------------------------------------------- *)
@@ -1009,3 +1038,327 @@ let cv_eval tm =
       TRANS t1 (compute (!cv_code) (rand(concl t1))) in
   let inj = cv_inj_of ty in
   EQ_MP (SPECL [tm; x] inj) (TRANS (TRANS th1 th2) (SYM th3));;
+
+(* ========================================================================= *)
+(* Clusters of mutually recursive functions, with lexicographic measures.   *)
+(*                                                                           *)
+(* cv_translate_cluster [(cname, clauses, measure); ...]: the measure of     *)
+(* member j maps its cval arguments to a triple (a, b, c) of numbers; every  *)
+(* call in the cluster must decrease the triple lexicographically.  The      *)
+(* members are defined through one function cv_cl over tagged arguments      *)
+(* Cexp_pair (Cexp_num j) args.                                              *)
+(* ========================================================================= *)
+
+let LEX3 = new_definition
+ `LEX3 (s:num#num#num) t <=>
+    FST s < FST t \/
+    (FST s = FST t /\ (FST (SND s) < FST (SND t) \/
+                       (FST (SND s) = FST (SND t) /\ SND (SND s) < SND (SND t))))`;;
+
+let LEX3_WF = prove
+ (`!M:A->num#num#num. WF (\x y. LEX3 (M x) (M y))`,
+  GEN_TAC THEN REWRITE_TAC[WF_IND] THEN
+  X_GEN_TAC `P:A->bool` THEN DISCH_TAC THEN
+  SUBGOAL_THEN `!a b c x. (M:A->num#num#num) x = (a,b,c) ==> (P:A->bool) x`
+    (fun th -> GEN_TAC THEN MATCH_MP_TAC th THEN
+               MESON_TAC[PAIR_SURJECTIVE]) THEN
+  MATCH_MP_TAC num_WF THEN X_GEN_TAC `a:num` THEN DISCH_TAC THEN
+  MATCH_MP_TAC num_WF THEN X_GEN_TAC `b:num` THEN DISCH_TAC THEN
+  MATCH_MP_TAC num_WF THEN X_GEN_TAC `c:num` THEN DISCH_TAC THEN
+  X_GEN_TAC `x:A` THEN DISCH_TAC THEN
+  FIRST_X_ASSUM (fun th -> if can (find_term (fun t -> t = `LEX3`)) (concl th)
+                           then MATCH_MP_TAC th else failwith "") THEN
+  X_GEN_TAC `y:A` THEN ASM_REWRITE_TAC[LEX3] THEN
+  MP_TAC(ISPEC `(M:A->num#num#num) y` PAIR_SURJECTIVE) THEN
+  REWRITE_TAC[EXISTS_PAIR_THM] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[FST; SND] THEN STRIP_TAC THEN ASM_MESON_TAC[]);;
+
+let LEX3_NUM_WF = prove
+ (`WF (\s:num#num#num t. LEX3 s t)`,
+  MP_TAC(ISPEC `\x:num#num#num. x` LEX3_WF) THEN REWRITE_TAC[] THEN
+  REWRITE_TAC[ETA_AX]);;
+
+(* the tagged argument of member j: Cexp_pair (Cexp_num j) (cv tuple)        *)
+let cv_cl_arg j vs = mk_cpair (mk_cnum j) (cv_tuple vs);;
+
+(* selectors of argument i (of n) from the cval tuple t                      *)
+let rec cv_tuple_sels t n =
+  if n = 1 then [t] else mk_cfst t :: cv_tuple_sels (mk_csnd t) (n - 1);;
+
+(* decide  conds ==> LEX3 s t : try arithmetic, then case splits of the     *)
+(* cval variables of the goal one at a time                                  *)
+let cv_lex_core_tac v : tactic =
+  STRUCT_CASES_TAC (SPEC v (cases "cval")) THEN
+  REWRITE_TAC (cv_measure_rw ()) THEN cv_split_ispair_tac 4 THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[cval_sum_size_def] THEN
+  cv_add_size_facts THEN ARITH_TAC;;
+
+let cv_lex_tac : tactic = fun (asl,w) ->
+  let vs = filter (fun v -> type_of v = cv_ty) (frees w) in
+  (REWRITE_TAC[LEX3; FST; SND; cval_sum_size_def] THEN
+   FIRST ((REPEAT STRIP_TAC THEN cv_add_size_facts THEN ARITH_TAC) ::
+          map cv_lex_core_tac vs)) (asl,w);;
+
+let cv_prove_lex conds s t =
+  let w = itlist (curry mk_imp) conds (list_mk_comb(`LEX3`, [s; t])) in
+  let th = prove(w, cv_lex_tac) in
+  rev_itlist (fun c th -> MP th (ASSUME c)) conds th;;
+
+let COND_CONG_EQ = prove
+ (`!c a1 a2 b1 b2:A. (c ==> a1 = a2) ==> (~c ==> b1 = b2) ==>
+                     (if c then a1 else b1) = (if c then a2 else b2)`,
+  REPEAT GEN_TAC THEN BOOL_CASES_TAC `c:bool` THEN REWRITE_TAC[]);;
+
+(* the walker for clusters: calls are  f (Cexp_pair (Cexp_num k) a)          *)
+let rec cv_cong_cl f g call conds t =
+  if not (free_in f t) then REFL t else
+  if is_comb t && rator t = f then
+    let arg = rand t in
+    if free_in f arg then failwith "cv_cong_cl: nested recursion" else
+    call conds arg
+  else if is_cond t then
+    let c,(a,b) = dest_cond t in
+    if free_in f c then failwith "cv_cong_cl: recursion in a condition" else
+    let tha = DISCH c (cv_cong_cl f g call (conds @ [c]) a) in
+    let thb = DISCH (mk_neg c) (cv_cong_cl f g call (conds @ [mk_neg c]) b) in
+    let th0 = ISPECL [c; a; rand(rand(concl tha)); b; rand(rand(concl thb))]
+                COND_CONG_EQ in
+    MP (MP th0 tha) thb
+  else
+    let h,args = strip_comb t in
+    if h = cexp_if_tm && length args = 3 then
+      let c,a,b = (match args with [c;a;b] -> (c,a,b) | _ -> failwith "") in
+      let thc = cv_cong_cl f g call conds c in
+      let c1 = lhs(concl thc) in
+      let p = mk_exists(`m:num`, mk_eq(c1, mk_comb(cexp_num_tm, `SUC m`))) in
+      let np = mk_neg p in
+      let tha = DISCH p (cv_cong_cl f g call (conds @ [p]) a) in
+      let thb = DISCH np (cv_cong_cl f g call (conds @ [np]) b) in
+      let th0 = ISPECL [c1; rand(concl thc); a; rand(rand(concl tha));
+                        b; rand(rand(concl thb))] CEXP_IF_CONG in
+      MP (MP (MP th0 thc) tha) thb
+    else if is_comb t then
+      let l,r = dest_comb t in
+      MK_COMB(cv_cong_cl f g call conds l, cv_cong_cl f g call conds r)
+    else if is_abs t then
+      let v,b = dest_abs t in ABS v (cv_cong_cl f g call conds b)
+    else REFL t;;
+
+let cv_tag_conv =
+  REWRITE_CONV[cexp_fst_def; CEXP_NUM_11] THENC NUM_REDUCE_CONV;;
+
+(* select the branch of the dispatcher for a tagged argument               *)
+let rec cv_select_conv tm =
+  if is_cond tm then
+    let c,(a,b) = dest_cond tm in
+    let thc = cv_tag_conv c in
+    let tm' = rand(concl thc) in
+    let th1 = AP_THM (AP_THM (AP_TERM (rator(rator(rator tm))) thc) a) b in
+    if tm' = `T` then TRANS th1 (CONJUNCT1 (ISPECL [a;b] COND_CLAUSES))
+    else if tm' = `F` then
+      TRANS (TRANS th1 (CONJUNCT2 (ISPECL [a;b] COND_CLAUSES)))
+            (cv_select_conv b)
+    else failwith "cv_select_conv"
+  else REFL tm;;
+
+let rec cv_list_beta_conv t =
+  if is_abs (rator t) then BETA_CONV t
+  else (RATOR_CONV cv_list_beta_conv THENC BETA_CONV) t;;
+
+let rec cv_args_conv t =
+  if is_comb t then
+    COMB2_CONV cv_args_conv (REWRITE_CONV[cexp_fst_def; cexp_snd_def]) t
+  else REFL t;;
+
+(* the tree tactic with an oracle built from the assumptions of the leaf     *)
+let rec cv_tree_tac2 f code_eq mk_oracle tree : tactic = fun (asl,w) ->
+  let concl_eq = if is_imp w then rand w else w in
+  let fapp = rand(lhs concl_eq) in
+  match tree with
+    Cv_split(nodeargs,y,branches) ->
+      let y' = cv_corr (list_mk_comb(f,nodeargs)) fapp y in
+      let _,cth = cv_type_cons (type_of y) in
+      (STRUCT_CASES_TAC (ISPEC y' cth) THENL
+         (map (fun (_,_,sub) -> cv_tree_tac2 f code_eq mk_oracle sub) branches))
+      (asl,w)
+  | Cv_leaf(nodeargs,th) ->
+      ((if is_imp w then DISCH_TAC else ALL_TAC) THEN
+      (fun (asl,w) ->
+        let enc_u = rator(lhs w) in
+        let fapp = rand(lhs w) in
+        let cl = PART_MATCH lhs th fapp in
+        let lhs_th = AP_TERM enc_u cl in
+        let tr_th = cv_tr (mk_oracle asl) (rand(concl lhs_th)) in
+        let args = snd(strip_comb fapp) in
+        let cvs = snd(strip_comb(lhs(concl code_eq))) in
+        let rhs_inst = INST (zip (map (fun a -> mk_comb(cv_enc_of (type_of a), a)) args)
+                                 cvs) code_eq in
+        let n1 = cv_norm_conv (rand(concl tr_th)) in
+        let n2 = cv_norm_conv (rand(concl rhs_inst)) in
+        let l = TRANS (TRANS lhs_th tr_th) n1 in
+        let r = TRANS rhs_inst n2 in
+        if not (aconv (rand(concl l)) (rand(concl r))) then
+          (print_string ("\ncv leaf mismatch:\n  " ^ string_of_term (rand(concl l)) ^
+                         "\n  " ^ string_of_term (rand(concl r)) ^ "\n");
+           failwith "cv_tree_tac2: leaf mismatch")
+        else ACCEPT_TAC (TRANS l (SYM r)) (asl,w)))
+      (asl,w);;
+
+let cv_lex_hol_lt s t =
+  prove(list_mk_comb(`LEX3`, [s; t]),
+        REWRITE_TAC (LEX3 :: FST :: SND :: cval_sum_size_def :: CV_OF_PROD_PAIR ::
+                     CV_OF_BOOL_CLAUSES :: !cv_enc_clauses) THEN ARITH_TAC);;
+
+let cv_translate_cluster specs =
+  let infos = map (fun (cname, th, mfun) ->
+      let cls = map cv_prep_clause (cv_clauses th) in
+      let f,args0 = strip_comb (lhs (concl (hd cls))) in
+      let xs = map (fun a -> cv_fresh (type_of a)) args0 in
+      let rows = map (fun th -> (snd(strip_comb(lhs(concl th))), th)) cls in
+      let tree = cv_compile xs xs rows in
+      let n = length xs in
+      let vs = map (fun i -> mk_var("v" ^ string_of_int i, cv_ty)) (1--n) in
+      let enc_u = cv_enc_of (type_of (lhs(concl(hd cls)))) in
+      (cname, f, xs, vs, tree, mfun, enc_u)) specs in
+  let nm = length infos in
+  let encx x = mk_comb(cv_enc_of (type_of x), x) in
+  let cvfs = map (fun (cname,f,xs,vs,_,_,_) ->
+      mk_var("cvf_" ^ cname, itlist (fun _ t -> mk_fun_ty cv_ty t) xs cv_ty)) infos in
+  let rec_ths = map2 (fun (cname,f,xs,vs,_,_,enc_u) cvf ->
+      ASSUME (list_mk_forall(xs, mk_eq(mk_comb(enc_u, list_mk_comb(f,xs)),
+                                       list_mk_comb(cvf, map encx xs))))) infos cvfs in
+  let fs = map (fun (_,f,_,_,_,_,_) -> f) infos in
+  let oracle tm =
+    let e,t = dest_comb tm in
+    let h = fst(strip_comb t) in
+    let i = index h fs in
+    PART_MATCH lhs (el i rec_ths) tm in
+  let _ = if !cv_verbose then print_string "[cl:codes]" else () in
+  let codes = map (fun (_,_,xs,vs,tree,_,_) ->
+      cv_gen_code (cv_tr oracle) (zip vs xs) tree) infos in
+  let _ = if !cv_verbose then print_string "[cl:dispatcher]" else () in
+  (* the dispatcher *)
+  let x = mk_var("cvx", cv_ty) and g = mk_var("cvg", mk_fun_ty cv_ty cv_ty) in
+  let subst_calls code =
+    let sub = map2 (fun cvf (j,(_,_,_,vs,_,_,_)) ->
+        (list_mk_abs(vs, mk_comb(g, cv_cl_arg j vs)), cvf))
+        cvfs (zip (0--(nm-1)) infos) in
+    rand(concl(DEPTH_CONV BETA_CONV (subst sub code))) in
+  let branch j =
+    let (_,_,_,vs,_,_,_) = el j infos in
+    list_mk_comb(list_mk_abs(vs, subst_calls (el j codes)),
+                 cv_tuple_sels (mk_csnd x) (length vs)) in
+  let body = itlist (fun j rest -> mk_cond(mk_eq(mk_cfst x, mk_cnum j), branch j, rest))
+                    (0--(nm-1)) (mk_cnum 0) in
+  let hh = mk_abs(g, mk_abs(x, body)) in
+  let mbody = itlist (fun j rest ->
+      let (_,_,_,vs,_,mfun,_) = el j infos in
+      mk_cond(mk_eq(mk_cfst x, mk_cnum j),
+              mfun (cv_tuple_sels (mk_csnd x) (length vs)), rest))
+      (0--(nm-1)) `(0,0,0)` in
+  let clm = mk_abs(x, mbody) in
+  let r = rand(concl(DEPTH_CONV BETA_CONV
+             (mk_abs(mk_var("cvy",cv_ty), mk_abs(x,
+                list_mk_comb(`LEX3`, [mk_comb(clm, mk_var("cvy",cv_ty));
+                                      mk_comb(clm, x)])))))) in
+  let _ = if !cv_verbose then print_string "[cl:wf]" else () in
+  let wf = CONV_RULE (RAND_CONV (DEPTH_CONV BETA_CONV)) (ISPEC clm LEX3_WF) in
+  let wf = EQ_MP (ALPHA (concl wf) (mk_comb(`WF:(cval->cval->bool)->bool`, r))) wf in
+  let wfr = INST_TYPE [cv_ty,`:A`; cv_ty,`:B`] WF_REC in
+  let wfr = INST [r, rand(lhand(concl wfr))] wfr in
+  let th1 = ISPEC hh (MP wfr wf) in
+  (* admissibility *)
+  let ff = mk_var("cvf1", type_of g) and gg = mk_var("cvg1", type_of g) in
+  let z = mk_var("cvz", cv_ty) in
+  let ihtm = mk_forall(z, mk_imp(list_mk_comb(r,[z;x]),
+                                 mk_eq(mk_comb(ff,z), mk_comb(gg,z)))) in
+  let ih = ASSUME ihtm in
+  let bconv = RATOR_CONV BETA_CONV THENC BETA_CONV THENC DEPTH_CONV BETA_CONV in
+  let bf = bconv (list_mk_comb(hh,[ff;x])) and bg = bconv (list_mk_comb(hh,[gg;x])) in
+  let call conds arg =
+    let ihs = SPEC arg ih in
+    let mterm = lhand(concl ihs) in
+    let red = (DEPTH_CONV BETA_CONV THENC
+               REWRITE_CONV (cexp_fst_def :: cexp_snd_def :: CEXP_NUM_11 ::
+                             map ASSUME (filter is_eq conds)) THENC
+               NUM_REDUCE_CONV THENC REWRITE_CONV[COND_CLAUSES]) mterm in
+    let s,t = (match snd(strip_comb(rand(concl red))) with [s;t] -> (s,t)
+               | _ -> failwith "cv_translate_cluster: measure") in
+    let lth = cv_prove_lex (filter (fun c -> not (is_eq c)) conds) s t in
+    let lth = EQ_MP (SYM red) (PROVE_HYP (ASSUME (list_mk_comb(`LEX3`,[s;t]))) lth) in
+    let tagconds = filter is_eq conds in
+    MP ihs (itlist PROVE_HYP (map ASSUME tagconds) lth) in
+  let _ = if !cv_verbose then print_string "[cl:walk]" else () in
+  let cth = cv_cong_cl ff gg call [] (rand(concl bf)) in
+  let adm = TRANS (TRANS bf cth) (SYM bg) in
+  let adm = GEN ff (GEN gg (GEN x (DISCH ihtm adm))) in
+  let th2 = MP th1 adm in
+  let _ = if !cv_verbose then print_string "[cl:spec]" else () in
+  let clname = "cv_cl_" ^ (let (c,_,_,_,_,_,_) = hd infos in c) in
+  let th3 = new_specification [clname] th2 in
+  let clc = mk_const(clname, []) in
+  (* the members *)
+  let cdefs = map (fun (j,(cname,f,xs,vs,_,_,_)) ->
+      new_definition (mk_eq(list_mk_comb(mk_var(cname,
+                        itlist (fun _ t -> mk_fun_ty cv_ty t) vs cv_ty), vs),
+                            mk_comb(clc, cv_cl_arg j vs))))
+      (zip (0--(nm-1)) infos) in
+  let _ = if !cv_verbose then print_string "[cl:codeeqs]" else () in
+  let code_eqs = map (fun (j,(cname,f,xs,vs,_,_,_)) ->
+      let cdef = SPEC_ALL (el j cdefs) in
+      let th = SPEC (cv_cl_arg j vs) th3 in
+      let th = CONV_RULE (RAND_CONV (RATOR_CONV BETA_CONV THENC BETA_CONV)) th in
+      let th = CONV_RULE (RAND_CONV cv_select_conv) th in
+      let th = CONV_RULE (RAND_CONV (cv_args_conv THENC cv_list_beta_conv)) th in
+      let th = TRANS cdef th in
+      let th = CONV_RULE (RAND_CONV (PURE_REWRITE_CONV (map (GSYM o SPEC_ALL) cdefs))) th in
+      th) (zip (0--(nm-1)) infos) in
+  let code_eqs = map SPEC_ALL code_eqs in
+  let _ = if !cv_verbose then print_string "[cl:corr]" else () in
+  (* correctness, by lexicographic induction on the measures *)
+  let sv = mk_var("cvs", `:num#num#num`) in
+  let conj_j (j,(cname,f,xs,vs,_,mfun,enc_u)) =
+    let cvc = fst(strip_comb(lhs(concl(el j code_eqs)))) in
+    list_mk_forall(xs, mk_imp(mk_eq(mfun (map encx xs), sv),
+       mk_eq(mk_comb(enc_u, list_mk_comb(f,xs)), list_mk_comb(cvc, map encx xs)))) in
+  let goal = mk_forall(sv, list_mk_conj (map conj_j (zip (0--(nm-1)) infos))) in
+  let lex_ind = CONV_RULE (DEPTH_CONV BETA_CONV) (REWRITE_RULE[WF_IND] LEX3_NUM_WF) in
+  let mk_oracle asl =
+    let meq = snd(hd asl) in
+    let ih = snd(find (fun (_,th) -> is_forall (concl th) &&
+                   (try is_imp (snd(dest_forall(concl th))) &&
+                        is_const (fst(strip_comb(lhand(snd(dest_forall(concl th))))))
+                    with Failure _ -> false)) asl) in
+    fun tm ->
+      let e,t = dest_comb tm in
+      let h,ys = strip_comb t in
+      let k = index h fs in
+      let (_,_,_,_,_,mfun,_) = el k infos in
+      let ms = mfun (map encx ys) in
+      let ih1 = SPEC ms ih in
+      let lt = cv_lex_hol_lt ms (lhs(concl meq)) in
+      let lt = EQ_MP (AP_TERM (rator(concl lt)) meq) lt in
+      let cs = CONJUNCTS (MP ih1 lt) in
+      MP (SPECL ys (el k cs)) (REFL ms) in
+  let tacs = map (fun (j,(_,f,_,_,tree,_,_)) ->
+      REPEAT GEN_TAC THEN cv_tree_tac2 f (el j code_eqs) mk_oracle tree)
+      (zip (0--(nm-1)) infos) in
+  let cth = prove(goal,
+    MATCH_MP_TAC lex_ind THEN GEN_TAC THEN DISCH_TAC THEN
+    (if nm = 1 then hd tacs else (REPEAT CONJ_TAC THENL tacs))) in
+  let corrs = map (fun (j,(cname,f,xs,vs,_,mfun,enc_u)) ->
+      let ms = mfun (map encx xs) in
+      let thj = el j (CONJUNCTS (SPEC ms cth)) in
+      GEN_ALL (GENL xs (MP (SPECL xs thj) (REFL ms))))
+      (zip (0--(nm-1)) infos) in
+  do_list (fun ((_,f,_,_,_,_,_),corr) ->
+      cv_fun_thms := (fst(dest_const f), corr) :: !cv_fun_thms) (zip infos corrs);
+  let cname_of th = fst(dest_const(fst(strip_comb(lhs(concl th))))) in
+  do_list (fun ce ->
+      cv_code := ce :: filter (fun th -> not (cname_of th = cname_of ce)) (!cv_code))
+    code_eqs;
+  (* the dispatcher's own equation is not needed by Kernel.compute *)
+  if !cv_verbose then
+    print_string ("cv_translate_cluster: " ^
+                  String.concat " " (map (fun (c,_,_,_,_,_,_) -> c) infos) ^ "\n");
+  corrs;;
