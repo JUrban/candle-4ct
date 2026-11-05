@@ -1438,30 +1438,37 @@ let cft_norm th = REWRITE_RULE cft_norm_thms th;;
 (* The closure state.                                                        *)
 (* ------------------------------------------------------------------------- *)
 
-type cft_state =
-  { cft_h : term; cft_dty : hol_type; cft_tms : term array;
-    cft_isdart : bool array; cft_randi : int array;
-    cft_eqp : int array; cft_eqt : thm array;
-    cft_cfp : int array; cft_cft : thm array;
+type cft_state = | Cft of {
+    cft_h : term;
+    cft_dty : hol_type;
+    cft_tms : term array;
+    cft_isdart : bool array;
+    cft_randi : int array;
+    cft_eqp : int array;
+    cft_eqt : thm array;
+    cft_cfp : int array;
+    cft_cft : thm array;
     cft_dart : thm option array;
-    mutable cft_neg : (int * int * thm) list;
-    mutable cft_neq : (int * int * thm) list;
-    mutable cft_pband : (term * int * thm) list;
-    mutable cft_nband : (term * int * thm) list;
-    mutable cft_mems : (int * term * thm) list;
-    mutable cft_alls : (term * term * thm) list;
-    mutable cft_insts : (thm * thm option list) list;
-    mutable cft_misc : (term * thm) list;
-    mutable cft_nmisc : (term * thm) list;
-    mutable cft_derived : thm list;
-    mutable cft_newfacts : thm list;
-    mutable cft_fired : term list;
-    mutable cft_nband_done : (int * int) list;
-    cft_hints : thm list; cft_lconsts : term list; cft_u0d : term list;
+    cft_neg : ((int * int * thm) list) ref;
+    cft_neq : ((int * int * thm) list) ref;
+    cft_pband : ((term * int * thm) list) ref;
+    cft_nband : ((term * int * thm) list) ref;
+    cft_mems : ((int * term * thm) list) ref;
+    cft_alls : ((term * term * thm) list) ref;
+    cft_insts : ((thm * thm option list) list) ref;
+    cft_misc : ((term * thm) list) ref;
+    cft_nmisc : ((term * thm) list) ref;
+    cft_derived : (thm list) ref;
+    cft_newfacts : (thm list) ref;
+    cft_fired : (term list) ref;
+    cft_nband_done : ((int * int) list) ref;
+    cft_hints : thm list;
+    cft_lconsts : term list;
+    cft_u0d : term list;
     cft_asms : thm list;
     cft_plain : thm option;
     cft_cubic : thm option;
-    mutable cft_changed : bool };;
+    cft_changed : (bool) ref };;
 
 let rec assoc_aconv tm l =
   match l with
@@ -1469,10 +1476,10 @@ let rec assoc_aconv tm l =
   | (t,v)::rest -> if aconv t tm then v else assoc_aconv tm rest;;
 
 let cft_index st tm =
-  let n = Array.length st.cft_tms in
+  let n = Array.length st.Cft.cft_tms in
   let rec look i =
     if i >= n then failwith "cft_index"
-    else if aconv st.cft_tms.(i) tm then i else look (i+1) in
+    else if aconv (Array.get st.Cft.cft_tms (i)) tm then i else look (i+1) in
   look 0;;
 
 let cft_has st tm = can (cft_index st) tm;;
@@ -1485,73 +1492,73 @@ let cft_has st tm = can (cft_index st) tm;;
 
 let cft_in_universe st c = forall (cft_has st) (cft_subterms [c]);;
 
-(* Union-find with a proof forest: prf.(i) relates t_i to t_(par.(i)).       *)
+(* Union-find with a proof forest: (Array.get prf (i)) relates t_i to t_((Array.get par (i))).       *)
 
-let rec cft_root par i = if par.(i) = i then i else cft_root par par.(i);;
+let rec cft_root par i = if (Array.get par (i)) = i then i else cft_root par (Array.get par (i));;
 
 let rec cft_find par prf refl trans tms i =
-  if par.(i) = i then (i, refl tms.(i)) else
-  let (r,p) = cft_find par prf refl trans tms par.(i) in
-  (r, trans prf.(i) p);;
+  if (Array.get par (i)) = i then (i, refl (Array.get tms (i))) else
+  let (r,p) = cft_find par prf refl trans tms (Array.get par (i)) in
+  (r, trans (Array.get prf (i)) p);;
 
 let cft_union par prf refl trans sym tms i j th =
   let (ri,pi) = cft_find par prf refl trans tms i
   and (rj,pj) = cft_find par prf refl trans tms j in
   if ri = rj then false else
-  (par.(ri) <- rj; prf.(ri) <- trans (sym pi) (trans th pj); true);;
+  (Array.set par (ri) (rj); Array.set prf (ri) (trans (sym pi) (trans th pj)); true);;
 
-let cft_cf_refl st tm = ISPECL [st.cft_h; tm] CFACE_REFL;;
+let cft_cf_refl st tm = ISPECL [st.Cft.cft_h; tm] CFACE_REFL;;
 let cft_cf_trans th1 th2 = MATCH_MP CFT_TRANS (CONJ th1 th2);;
 let cft_cf_sym th = MATCH_MP CFACE_SYM_GEN th;;
 
-let cft_eq_same st i j = cft_root st.cft_eqp i = cft_root st.cft_eqp j;;
-let cft_cf_same st i j = cft_root st.cft_cfp i = cft_root st.cft_cfp j;;
+let cft_eq_same st i j = cft_root st.Cft.cft_eqp i = cft_root st.Cft.cft_eqp j;;
+let cft_cf_same st i j = cft_root st.Cft.cft_cfp i = cft_root st.Cft.cft_cfp j;;
 
 let cft_eq_prove st i j =
-  let (ri,pi) = cft_find st.cft_eqp st.cft_eqt REFL TRANS st.cft_tms i
-  and (rj,pj) = cft_find st.cft_eqp st.cft_eqt REFL TRANS st.cft_tms j in
+  let (ri,pi) = cft_find st.Cft.cft_eqp st.Cft.cft_eqt REFL TRANS st.Cft.cft_tms i
+  and (rj,pj) = cft_find st.Cft.cft_eqp st.Cft.cft_eqt REFL TRANS st.Cft.cft_tms j in
   if ri = rj then TRANS pi (SYM pj) else failwith "cft_eq_prove";;
 
 let cft_cf_prove st i j =
-  let fd = cft_find st.cft_cfp st.cft_cft (cft_cf_refl st) cft_cf_trans
-             st.cft_tms in
+  let fd = cft_find st.Cft.cft_cfp st.Cft.cft_cft (cft_cf_refl st) cft_cf_trans
+             st.Cft.cft_tms in
   let (ri,pi) = fd i and (rj,pj) = fd j in
   if ri = rj then cft_cf_trans pi (cft_cf_sym pj)
   else failwith "cft_cf_prove";;
 
 let cft_cf_union st i j th =
-  if cft_union st.cft_cfp st.cft_cft (cft_cf_refl st) cft_cf_trans cft_cf_sym
-       st.cft_tms i j th
-  then st.cft_changed <- true;;
+  if cft_union st.Cft.cft_cfp st.Cft.cft_cft (cft_cf_refl st) cft_cf_trans cft_cf_sym
+       st.Cft.cft_tms i j th
+  then st.Cft.cft_changed := true;;
 
 let cft_eq_union st i j th =
-  if cft_union st.cft_eqp st.cft_eqt REFL TRANS SYM st.cft_tms i j th then
-   (st.cft_changed <- true;
-    if st.cft_isdart.(i) then
-      cft_cf_union st i j (MATCH_MP (ISPEC st.cft_h CFT_EQ) th));;
+  if cft_union st.Cft.cft_eqp st.Cft.cft_eqt REFL TRANS SYM st.Cft.cft_tms i j th then
+   (st.Cft.cft_changed := true;
+    if (Array.get st.Cft.cft_isdart (i)) then
+      cft_cf_union st i j (MATCH_MP (ISPEC st.Cft.cft_h CFT_EQ) th));;
 
 let cft_set_dart st i th =
-  if st.cft_dart.(i) = None then
-   (st.cft_dart.(i) <- Some th; st.cft_changed <- true);;
+  if (Array.get st.Cft.cft_dart (i)) = None then
+   (Array.set st.Cft.cft_dart (i) (Some th); st.Cft.cft_changed := true);;
 
 (* Indices of the terms `name H s` equal (EQ) to t_i.                        *)
 
 let cft_eq_maps st name i =
-  let n = Array.length st.cft_tms in
+  let n = Array.length st.Cft.cft_tms in
   let rec look j acc =
     if j >= n then acc else
     look (j+1) (if cft_eq_same st i j &&
-                   can (cft_dest_map st.cft_h name) st.cft_tms.(j)
+                   can (cft_dest_map st.Cft.cft_h name) (Array.get st.Cft.cft_tms (j))
                 then j::acc else acc) in
   look 0 [];;
 
 let cft_map_of st tm =
-  if can (cft_dest_map st.cft_h "edge_map") tm
-  then ("e", cft_dest_map st.cft_h "edge_map" tm)
-  else if can (cft_dest_map st.cft_h "node_map") tm
-  then ("n", cft_dest_map st.cft_h "node_map" tm)
-  else if can (cft_dest_map st.cft_h "face_map") tm
-  then ("f", cft_dest_map st.cft_h "face_map" tm)
+  if can (cft_dest_map st.Cft.cft_h "edge_map") tm
+  then ("e", cft_dest_map st.Cft.cft_h "edge_map" tm)
+  else if can (cft_dest_map st.Cft.cft_h "node_map") tm
+  then ("n", cft_dest_map st.Cft.cft_h "node_map" tm)
+  else if can (cft_dest_map st.Cft.cft_h "face_map") tm
+  then ("f", cft_dest_map st.Cft.cft_h "face_map" tm)
   else failwith "cft_map_of";;
 
 (* ------------------------------------------------------------------------- *)
@@ -1559,15 +1566,15 @@ let cft_map_of st tm =
 (* ------------------------------------------------------------------------- *)
 
 let cft_add st th =
-  let h = st.cft_h and dty = st.cft_dty in
+  let h = st.Cft.cft_h and dty = st.Cft.cft_dty in
   let rec add th =
     let c = concl th in
     if is_conj c then (add (CONJUNCT1 th); add (CONJUNCT2 th)) else
-    let _ = if not (exists (fun t -> aconv (concl t) c) st.cft_asms) &&
-               not (exists (fun t -> aconv (concl t) c) st.cft_derived) &&
+    let _ = if not (exists (fun t -> aconv (concl t) c) st.Cft.cft_asms) &&
+               not (exists (fun t -> aconv (concl t) c) (!(st.Cft.cft_derived))) &&
                cft_in_universe st c
-            then (st.cft_derived <- th :: st.cft_derived;
-                  st.cft_newfacts <- th :: st.cft_newfacts) in
+            then (st.Cft.cft_derived := th :: (!(st.Cft.cft_derived));
+                  st.Cft.cft_newfacts := th :: (!(st.Cft.cft_newfacts))) in
     if can cft_dest_cface c then
      (let (h',a,b) = cft_dest_cface c in
       if aconv h' h && cft_has st a && cft_has st b then
@@ -1575,7 +1582,7 @@ let cft_add st th =
     else if is_neg c && can cft_dest_cface (dest_neg c) then
      (let (h',a,b) = cft_dest_cface (dest_neg c) in
       if aconv h' h && cft_has st a && cft_has st b then
-        st.cft_neg <- (cft_index st a, cft_index st b, th) :: st.cft_neg)
+        st.Cft.cft_neg := (cft_index st a, cft_index st b, th) :: (!(st.Cft.cft_neg)))
     else if is_eq c && not (type_of (lhs c) = bool_ty) then
      (let a,b = dest_eq c in
       if cft_has st a && cft_has st b then
@@ -1584,7 +1591,7 @@ let cft_add st th =
             not (type_of (lhs (dest_neg c)) = bool_ty) then
      (let a,b = dest_eq (dest_neg c) in
       if cft_has st a && cft_has st b then
-        st.cft_neq <- (cft_index st a, cft_index st b, th) :: st.cft_neq)
+        st.Cft.cft_neq := (cft_index st a, cft_index st b, th) :: (!(st.Cft.cft_neq)))
     else if can cft_dest_in_dart c then
      (let (t,h') = cft_dest_in_dart c in
       if aconv h' h && cft_has st t then cft_set_dart st (cft_index st t) th)
@@ -1594,28 +1601,28 @@ let cft_add st th =
         if is_list p || is_binary "APPEND" p then
           (let th' = cft_norm th in
            if not (aconv (concl th') c) then add th')
-        else st.cft_pband <- (p, cft_index st a, th) :: st.cft_pband)
+        else st.Cft.cft_pband := (p, cft_index st a, th) :: (!(st.Cft.cft_pband)))
     else if is_neg c && can cft_dest_fband (dest_neg c) then
      (let (h',p,a) = cft_dest_fband (dest_neg c) in
       if aconv h' h && cft_has st a then
         if is_list p || is_binary "APPEND" p then
           (let th' = cft_norm th in
            if not (aconv (concl th') c) then add th')
-        else st.cft_nband <- (p, cft_index st a, th) :: st.cft_nband)
+        else st.Cft.cft_nband := (p, cft_index st a, th) :: (!(st.Cft.cft_nband)))
     else if can cft_dest_mem c then
      (let (y,p) = cft_dest_mem c in
       if cft_has st y then
-        st.cft_mems <- (cft_index st y, p, th) :: st.cft_mems)
+        st.Cft.cft_mems := (cft_index st y, p, th) :: (!(st.Cft.cft_mems)))
     else if is_neg c && can cft_dest_mem (dest_neg c) &&
             is_cons (snd (cft_dest_mem (dest_neg c))) then
       add (REWRITE_RULE[MEM; DE_MORGAN_THM] th)
     else if can cft_dest_all c then
-     (let (pr,p) = cft_dest_all c in st.cft_alls <- (pr,p,th) :: st.cft_alls)
+     (let (pr,p) = cft_dest_all c in st.Cft.cft_alls := (pr,p,th) :: (!(st.Cft.cft_alls)))
     else if can cft_dest_in_kernel c then
-     (st.cft_misc <- (c,th) :: st.cft_misc;
+     (st.Cft.cft_misc := (c,th) :: (!(st.Cft.cft_misc));
       add (REWRITE_RULE[IN_KERNEL] th))
-    else if is_neg c then st.cft_nmisc <- (dest_neg c,th) :: st.cft_nmisc
-    else st.cft_misc <- (c,th) :: st.cft_misc in
+    else if is_neg c then st.Cft.cft_nmisc := (dest_neg c,th) :: (!(st.Cft.cft_nmisc))
+    else st.Cft.cft_misc := (c,th) :: (!(st.Cft.cft_misc)) in
   add th;;
 
 (* Facts derived from ALL P p and ~fband H p a together with MEM y p.        *)
@@ -1624,15 +1631,15 @@ let cft_seed_mems st =
   do_list (fun (pr,p,th) ->
     do_list (fun (i,p',thm) ->
       if aconv p p' then
-        cft_add st (BETA_RULE (MP (SPEC st.cft_tms.(i)
+        cft_add st (BETA_RULE (MP (SPEC (Array.get st.Cft.cft_tms (i))
           (EQ_MP (SYM (ISPECL [pr; p] ALL_MEM)) th)) thm)))
-      st.cft_mems) st.cft_alls;
+      (!(st.Cft.cft_mems))) (!(st.Cft.cft_alls));
   do_list (fun (p,i,th) ->
     do_list (fun (j,p',thm) ->
       if aconv p p' then
-        st.cft_neg <-
-          (i, j, MATCH_MP CFT_NOT_FBAND (CONJ th thm)) :: st.cft_neg)
-      st.cft_mems) st.cft_nband;;
+        st.Cft.cft_neg :=
+          (i, j, MATCH_MP CFT_NOT_FBAND (CONJ th thm)) :: (!(st.Cft.cft_neg)))
+      (!(st.Cft.cft_mems))) (!(st.Cft.cft_nband));;
 
 (* ------------------------------------------------------------------------- *)
 (* Queries against the closure (used for hint antecedents).                  *)
@@ -1640,13 +1647,13 @@ let cft_seed_mems st =
 
 let cft_asm st a =
   if a = `T` then TRUTH else
-  try find (fun th -> aconv (concl th) a) st.cft_asms
+  try find (fun th -> aconv (concl th) a) st.Cft.cft_asms
   with Failure _ ->
-  try find (fun th -> aconv (concl th) a) st.cft_derived
+  try find (fun th -> aconv (concl th) a) (!(st.Cft.cft_derived))
   with Failure _ -> failwith "cft_asm";;
 
 let cft_query st a =
-  let h = st.cft_h in
+  let h = st.Cft.cft_h in
   if can cft_dest_cface a then
    (let (h',x,y) = cft_dest_cface a in
     if aconv h' h && cft_has st x && cft_has st y
@@ -1655,7 +1662,7 @@ let cft_query st a =
   else if can cft_dest_in_dart a then
    (let (t,h') = cft_dest_in_dart a in
     if aconv h' h && cft_has st t then
-      (match st.cft_dart.(cft_index st t) with
+      (match (Array.get st.Cft.cft_dart (cft_index st t)) with
          Some th -> th
        | None -> failwith "cft_query")
     else cft_asm st a)
@@ -1672,7 +1679,7 @@ let cft_query st a =
 
 let cft_is_query st a =
   can cft_dest_cface a || can cft_dest_in_dart a ||
-  (is_eq a && type_of (lhs a) = st.cft_dty);;
+  (is_eq a && type_of (lhs a) = st.Cft.cft_dty);;
 
 let cft_relevant_atom dty t =
   can cft_dest_cface t || can cft_dest_fband t || can cft_dest_mem t ||
@@ -1703,7 +1710,7 @@ let cft_pre_instances st base lconsts u0 hint =
   let gnames = map (fst o dest_var) gvs in
   let is_gv t = is_var t && mem (fst(dest_var t)) gnames in
   let gfrees t = filter is_gv (frees t) in
-  let h = st.cft_h and dty = st.cft_dty in
+  let h = st.Cft.cft_h and dty = st.Cft.cft_dty in
   let bind_hyps th =
     let hv = filter (fun v -> cft_is_hypermap_ty (type_of v) &&
                               can (type_match (type_of v) (type_of h)) [])
@@ -1753,7 +1760,7 @@ let cft_try_fire st (th,prfs) =
     let proofs = map2 (fun a p -> match p with
                                     Some th' -> th'
                                   | None -> cft_query st a) antes prfs in
-    st.cft_fired <- concl th :: st.cft_fired;
+    st.Cft.cft_fired := concl th :: (!(st.Cft.cft_fired));
     cft_add st (MP th (end_itlist CONJ proofs)); true
   with Failure _ -> false;;
 
@@ -1761,135 +1768,135 @@ let cft_try_fire st (th,prfs) =
 (* (chaining, e.g. MEM u r1 ==> MEM u p and MEM u p ==> ~cface x u).         *)
 
 let cft_reinstantiate st =
-  if st.cft_newfacts = [] then () else
-  let base = st.cft_asms @ st.cft_derived in
-  st.cft_newfacts <- [];
-  let known c = exists (fun (th,_) -> aconv (concl th) c) st.cft_insts ||
-                exists (aconv c) st.cft_fired in
+  if (!(st.Cft.cft_newfacts)) = [] then () else
+  let base = st.Cft.cft_asms @ (!(st.Cft.cft_derived)) in
+  st.Cft.cft_newfacts := [];
+  let known c = exists (fun (th,_) -> aconv (concl th) c) (!(st.Cft.cft_insts)) ||
+                exists (aconv c) (!(st.Cft.cft_fired)) in
   let news = filter (fun (th,_) -> not (known (concl th)))
-               (flat (map (cft_pre_instances st base st.cft_lconsts
-                             st.cft_u0d) st.cft_hints)) in
+               (flat (map (cft_pre_instances st base st.Cft.cft_lconsts
+                             st.Cft.cft_u0d) st.Cft.cft_hints)) in
   if news <> [] then
-   (st.cft_insts <- st.cft_insts @ news; st.cft_changed <- true);;
+   (st.Cft.cft_insts := (!(st.Cft.cft_insts)) @ news; st.Cft.cft_changed := true);;
 
 (* ------------------------------------------------------------------------- *)
 (* One round of closure rules.                                               *)
 (* ------------------------------------------------------------------------- *)
 
 let cft_round st =
-  let n = Array.length st.cft_tms and h = st.cft_h and tms = st.cft_tms in
-  let dart i = st.cft_isdart.(i) in
+  let n = Array.length st.Cft.cft_tms and h = st.Cft.cft_h and tms = st.Cft.cft_tms in
+  let dart i = (Array.get st.Cft.cft_isdart (i)) in
   (* congruence: g a = g b from a = b (all types) *)
-  for i = 0 to n - 1 do
-    if st.cft_randi.(i) >= 0 then
-      for j = i + 1 to n - 1 do
-        if st.cft_randi.(j) >= 0 &&
-           cft_eq_same st st.cft_randi.(i) st.cft_randi.(j) &&
+  for_loop (0) (n - 1) (fun i -> (
+    if (Array.get st.Cft.cft_randi (i)) >= 0 then
+      for_loop (i + 1) (n - 1) (fun j -> (
+        if (Array.get st.Cft.cft_randi (j)) >= 0 &&
+           cft_eq_same st (Array.get st.Cft.cft_randi (i)) (Array.get st.Cft.cft_randi (j)) &&
            not (cft_eq_same st i j) &&
-           aconv (rator tms.(i)) (rator tms.(j)) then
+           aconv (rator (Array.get tms (i))) (rator (Array.get tms (j))) then
           cft_eq_union st i j
-            (AP_TERM (rator tms.(i))
-                     (cft_eq_prove st st.cft_randi.(i) st.cft_randi.(j)))
-      done
-  done;
+            (AP_TERM (rator (Array.get tms (i)))
+                     (cft_eq_prove st (Array.get st.Cft.cft_randi (i)) (Array.get st.Cft.cft_randi (j))))
+      ))
+  ));
   (* the hypermap laws nodeK/edgeK/faceK and the plain laws, modulo EQ *)
-  for i = 0 to n - 1 do
-    if dart i && can (cft_map_of st) tms.(i) then
-     (let (g,a) = cft_map_of st tms.(i) in
+  for_loop (0) (n - 1) (fun i -> (
+    if dart i && can (cft_map_of st) (Array.get tms (i)) then
+     (let (g,a) = cft_map_of st (Array.get tms (i)) in
       let ia = cft_index st a in
       let (g1,g2,klem) =
         if g = "f" then ("edge_map","node_map",nodeK)
         else if g = "n" then ("face_map","edge_map",edgeK)
         else ("node_map","face_map",faceK) in
       do_list (fun j ->
-        let b = cft_dest_map h g1 tms.(j) in
+        let b = cft_dest_map h g1 (Array.get tms (j)) in
         let ib = cft_index st b in
         do_list (fun k ->
-          let c = cft_dest_map h g2 tms.(k) in
+          let c = cft_dest_map h g2 (Array.get tms (k)) in
           let ic = cft_index st c in
           if not (cft_eq_same st i ic) then
-           (let th1 = AP_TERM (rator tms.(i))
+           (let th1 = AP_TERM (rator (Array.get tms (i)))
                         (TRANS (cft_eq_prove st ia j)
-                               (AP_TERM (rator tms.(j))
+                               (AP_TERM (rator (Array.get tms (j)))
                                         (cft_eq_prove st ib k))) in
             cft_eq_union st i ic (TRANS th1 (ISPECL [h; c] klem))))
           (cft_eq_maps st g2 ib))
         (cft_eq_maps st g1 ia);
-      match st.cft_plain with
+      match st.Cft.cft_plain with
         None -> ()
       | Some pl ->
           if g = "e" then
             do_list (fun j ->
-              let b = cft_dest_map h "edge_map" tms.(j) in
+              let b = cft_dest_map h "edge_map" (Array.get tms (j)) in
               let ib = cft_index st b in
               if not (cft_eq_same st i ib) then
-               (let th1 = AP_TERM (rator tms.(i)) (cft_eq_prove st ia j) in
+               (let th1 = AP_TERM (rator (Array.get tms (i))) (cft_eq_prove st ia j) in
                 cft_eq_union st i ib
                   (TRANS th1 (MP (ISPECL [h; b] CFT_PLAIN_EE) pl))))
               (cft_eq_maps st "edge_map" ia)
           else if g = "n" then
             do_list (fun j ->
-              let b = cft_dest_map h "face_map" tms.(j) in
+              let b = cft_dest_map h "face_map" (Array.get tms (j)) in
               let eb = cft_mk_map "edge_map" h b in
               if cft_has st eb then
                (let ieb = cft_index st eb in
                 if not (cft_eq_same st i ieb) then
-                 (let th1 = AP_TERM (rator tms.(i)) (cft_eq_prove st ia j) in
+                 (let th1 = AP_TERM (rator (Array.get tms (i))) (cft_eq_prove st ia j) in
                   cft_eq_union st i ieb
                     (TRANS th1 (MP (ISPECL [h; b] CFT_PLAIN_NF) pl)))))
               (cft_eq_maps st "face_map" ia)
           else ())
-  done;
+  ));
   (* cofaciality steps: face_map, edge_map o node_map, cubic, ITER, inverse *)
-  for i = 0 to n - 1 do
-    if dart i && can (cft_map_of st) tms.(i) then
-     (let (g,a) = cft_map_of st tms.(i) in
+  for_loop (0) (n - 1) (fun i -> (
+    if dart i && can (cft_map_of st) (Array.get tms (i)) then
+     (let (g,a) = cft_map_of st (Array.get tms (i)) in
       let ia = cft_index st a in
       if g = "f" then
        (if not (cft_cf_same st ia i) then
           cft_cf_union st ia i (ISPECL [h; a] CFT_FACE))
       else if g = "e" then
         do_list (fun j ->
-          let b = cft_dest_map h "node_map" tms.(j) in
+          let b = cft_dest_map h "node_map" (Array.get tms (j)) in
           let ib = cft_index st b in
           if not (cft_cf_same st i ib) then
            (let th1 = MATCH_MP (ISPEC h CFT_EQ)
-                        (AP_TERM (rator tms.(i)) (cft_eq_prove st ia j)) in
+                        (AP_TERM (rator (Array.get tms (i))) (cft_eq_prove st ia j)) in
             cft_cf_union st i ib
               (cft_cf_trans th1 (ISPECL [h; b] CFT_EDGE_NODE))))
           (cft_eq_maps st "node_map" ia)
       else
-        match st.cft_cubic with
+        match st.Cft.cft_cubic with
           None -> ()
         | Some cu ->
             do_list (fun j ->
-              let b = cft_dest_map h "node_map" tms.(j) in
+              let b = cft_dest_map h "node_map" (Array.get tms (j)) in
               let eb = cft_mk_map "edge_map" h b in
               if cft_has st eb then
                (let ieb = cft_index st eb in
                 if not (cft_cf_same st i ieb) then
                  (let th1 = MATCH_MP (ISPEC h CFT_EQ)
-                    (AP_TERM (rator tms.(i)) (cft_eq_prove st ia j)) in
+                    (AP_TERM (rator (Array.get tms (i))) (cft_eq_prove st ia j)) in
                   cft_cf_union st i ieb
                     (cft_cf_trans th1
                        (MP (ISPECL [h; b] CFT_CUBIC_NNE) cu)))))
               (cft_eq_maps st "node_map" ia))
-    else if dart i && can (cft_dest_iter h) tms.(i) then
-     (let (nn,a) = cft_dest_iter h tms.(i) in
+    else if dart i && can (cft_dest_iter h) (Array.get tms (i)) then
+     (let (nn,a) = cft_dest_iter h (Array.get tms (i)) in
       let ia = cft_index st a in
       if not (cft_cf_same st ia i) then
         cft_cf_union st ia i (ISPECL [h; nn; a] CFT_ITER))
-    else if dart i && can (cft_dest_finv h) tms.(i) then
-     (let a = cft_dest_finv h tms.(i) in
+    else if dart i && can (cft_dest_finv h) (Array.get tms (i)) then
+     (let a = cft_dest_finv h (Array.get tms (i)) in
       let ia = cft_index st a in
       if not (cft_cf_same st i ia) then
         cft_cf_union st i ia (ISPECL [h; a] CFT_INV))
-  done;
+  ));
   (* dart membership: through the maps and through cofaciality *)
-  for i = 0 to n - 1 do
-    if dart i && st.cft_dart.(i) = None && can (cft_map_of st) tms.(i) then
-     (let (g,a) = cft_map_of st tms.(i) in
-      match st.cft_dart.(cft_index st a) with
+  for_loop (0) (n - 1) (fun i -> (
+    if dart i && (Array.get st.Cft.cft_dart (i)) = None && can (cft_map_of st) (Array.get tms (i)) then
+     (let (g,a) = cft_map_of st (Array.get tms (i)) in
+      match (Array.get st.Cft.cft_dart (cft_index st a)) with
         Some da ->
           let th3 = MP (ISPECL [h; a] MAPS_IN_DART) da in
           cft_set_dart st i
@@ -1897,10 +1904,10 @@ let cft_round st =
              else if g = "n" then CONJUNCT1(CONJUNCT2 th3)
              else CONJUNCT2(CONJUNCT2 th3))
       | None -> ());
-    if dart i && st.cft_dart.(i) = None then
+    if dart i && (Array.get st.Cft.cft_dart (i)) = None then
      (let rec look j =
         if j >= n then () else
-        match st.cft_dart.(j) with
+        match (Array.get st.Cft.cft_dart (j)) with
           Some dj ->
             if dart j && cft_cf_same st i j then
               cft_set_dart st i
@@ -1908,20 +1915,20 @@ let cft_round st =
             else look (j+1)
         | None -> look (j+1) in
       look 0)
-  done;
+  ));
   (* ~fband H p a transported along list equations p = CONS .. / APPEND .. *)
   do_list (fun (p,i,th) ->
     if cft_has st p then
      (let ip = cft_index st p in
-      for j = 0 to n - 1 do
-        if j <> ip && (is_cons tms.(j) || is_binary "APPEND" tms.(j)) &&
-           cft_eq_same st ip j && not (mem (i,j) st.cft_nband_done) then
-         (st.cft_nband_done <- (i,j) :: st.cft_nband_done;
+      for_loop (0) (n - 1) (fun j -> (
+        if j <> ip && (is_cons (Array.get tms (j)) || is_binary "APPEND" (Array.get tms (j))) &&
+           cft_eq_same st ip j && not (mem (i,j) (!(st.Cft.cft_nband_done))) then
+         (st.Cft.cft_nband_done := (i,j) :: (!(st.Cft.cft_nband_done));
           cft_add st (SUBS [cft_eq_prove st ip j] th))
-      done)) st.cft_nband;
+      )))) (!(st.Cft.cft_nband));
   (* hints *)
-  st.cft_insts <- filter (fun inst -> not (cft_try_fire st inst))
-                         st.cft_insts;
+  st.Cft.cft_insts := filter (fun inst -> not (cft_try_fire st inst))
+                         (!(st.Cft.cft_insts));
   cft_reinstantiate st;;
 
 (* ------------------------------------------------------------------------- *)
@@ -1967,16 +1974,16 @@ let cft_build hints h asl w =
                 (if cubic = None then [] else cu_terms u) in
   let u0 = union' aconv u0 (extra u0) in
   let dummy =
-    { cft_h = h; cft_dty = dty; cft_tms = [||]; cft_isdart = [||];
-      cft_randi = [||];
-      cft_eqp = [||]; cft_eqt = [||]; cft_cfp = [||]; cft_cft = [||];
-      cft_dart = [||]; cft_neg = []; cft_neq = []; cft_pband = [];
-      cft_nband = []; cft_mems = []; cft_alls = []; cft_insts = [];
-      cft_misc = []; cft_nmisc = []; cft_derived = []; cft_newfacts = [];
-      cft_fired = []; cft_nband_done = []; cft_hints = [];
+    Cft { cft_h = h; cft_dty = dty; cft_tms = (Array.of_list []); cft_isdart = (Array.of_list []);
+      cft_randi = (Array.of_list []);
+      cft_eqp = (Array.of_list []); cft_eqt = (Array.of_list []); cft_cfp = (Array.of_list []); cft_cft = (Array.of_list []);
+      cft_dart = (Array.of_list []); cft_neg = ref ([]); cft_neq = ref ([]); cft_pband = ref ([]);
+      cft_nband = ref ([]); cft_mems = ref ([]); cft_alls = ref ([]); cft_insts = ref ([]);
+      cft_misc = ref ([]); cft_nmisc = ref ([]); cft_derived = ref ([]); cft_newfacts = ref ([]);
+      cft_fired = ref ([]); cft_nband_done = ref ([]); cft_hints = [];
       cft_lconsts = lconsts; cft_u0d = u0d;
       cft_asms = asms; cft_plain = plain;
-      cft_cubic = cubic; cft_changed = false } in
+      cft_cubic = cubic; cft_changed = ref (false)} in
   let useful th =
     let body = snd (strip_forall (concl th)) in
     let conc = if is_imp body then rand body else body in
@@ -1990,24 +1997,24 @@ let cft_build hints h asl w =
   let n = length u1 in
   let tms = Array.of_list u1 in
   let idx t = let rec look i = if i >= n then -1
-                               else if aconv tms.(i) t then i
+                               else if aconv (Array.get tms (i)) t then i
                                else look (i+1) in look 0 in
   let st =
-    { dummy with cft_tms = tms;
+    Cft { dummy with cft_tms = tms;
       cft_isdart = Array.map (fun t -> type_of t = dty) tms;
       cft_randi = Array.map (fun t -> if is_comb t then idx (rand t) else -1)
                             tms;
-      cft_eqp = Array.init n (fun i -> i); cft_eqt = Array.make n TRUTH;
-      cft_cfp = Array.init n (fun i -> i); cft_cft = Array.make n TRUTH;
-      cft_dart = Array.make n None; cft_insts = insts;
+      cft_eqp = Cake.Array.tabulate n (fun i -> i); cft_eqt = Array.make n TRUTH;
+      cft_cfp = Cake.Array.tabulate n (fun i -> i); cft_cft = Array.make n TRUTH;
+      cft_dart = Array.make n None; cft_insts = ref (insts);
       cft_hints = allhints } in
   do_list (cft_add st) asms;
   cft_seed_mems st;
-  st.cft_newfacts <- [];
+  st.Cft.cft_newfacts := [];
   let rec loop k =
-    st.cft_changed <- false;
+    st.Cft.cft_changed := false;
     cft_round st;
-    if st.cft_changed && k < !cft_max_rounds then loop (k+1) in
+    if (!(st.Cft.cft_changed)) && k < !cft_max_rounds then loop (k+1) in
   loop 0;
   st;;
 
@@ -2019,24 +2026,24 @@ let cft_refute st =
   let viol (i,j,th) =
     if cft_cf_same st i j then MP (NOT_ELIM th) (cft_cf_prove st i j)
     else failwith "cft_refute" in
-  try tryfind viol st.cft_neg with Failure _ ->
+  try tryfind viol (!(st.Cft.cft_neg)) with Failure _ ->
   try tryfind (fun (i,j,th) ->
         if cft_eq_same st i j then MP (NOT_ELIM th) (cft_eq_prove st i j)
-        else failwith "cft_refute") st.cft_neq
+        else failwith "cft_refute") (!(st.Cft.cft_neq))
   with Failure _ ->
   try tryfind (fun (p,i,th) ->
         tryfind (fun (p',j,th') ->
           if aconv p p' && cft_cf_same st i j then
             MP (NOT_ELIM th)
                (MATCH_MP CFT_FBAND_CFACE (CONJ th' (cft_cf_prove st i j)))
-          else failwith "cft_refute") st.cft_pband) st.cft_nband
+          else failwith "cft_refute") (!(st.Cft.cft_pband))) (!(st.Cft.cft_nband))
   with Failure _ ->
-  try tryfind (fun (t,th) -> MP (NOT_ELIM th) (assoc_aconv t st.cft_misc))
-              st.cft_nmisc
+  try tryfind (fun (t,th) -> MP (NOT_ELIM th) (assoc_aconv t (!(st.Cft.cft_misc))))
+              (!(st.Cft.cft_nmisc))
   with Failure _ -> failwith "CFACE_TAC: no contradiction found";;
 
 let cft_decide_atom st w =
-  let h = st.cft_h in
+  let h = st.Cft.cft_h in
   if w = `F` then cft_refute st
   else if can cft_dest_cface w then
    (let (h',a,b) = cft_dest_cface w in
@@ -2047,7 +2054,7 @@ let cft_decide_atom st w =
   else if can cft_dest_in_dart w then
    (let (t,h') = cft_dest_in_dart w in
     if not (aconv h' h) then failwith "cft_decide" else
-    match st.cft_dart.(cft_index st t) with
+    match (Array.get st.Cft.cft_dart (cft_index st t)) with
       Some th -> th
     | None -> failwith "CFACE_TAC: dart membership not derivable")
   else if can cft_dest_fband w then
@@ -2063,13 +2070,13 @@ let cft_decide_atom st w =
       try tryfind (fun (p',j,th) ->
             if aconv p p' then
               MATCH_MP CFT_FBAND_CFACE (CONJ th (cft_cf_prove st ia j))
-            else failwith "") st.cft_pband
+            else failwith "") (!(st.Cft.cft_pband))
       with Failure _ ->
         tryfind (fun (k,p',th) ->
           if aconv p p' then
             MATCH_MP CFT_FBAND_MEM (CONJ th (cft_cf_prove st ia k))
-          else failwith "") st.cft_mems)
-  else try assoc_aconv w st.cft_misc
+          else failwith "") (!(st.Cft.cft_mems)))
+  else try assoc_aconv w (!(st.Cft.cft_misc))
        with Failure _ -> failwith "CFACE_TAC: goal not derivable";;
 
 let cft_decide st w =
