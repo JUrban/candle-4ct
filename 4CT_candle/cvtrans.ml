@@ -328,6 +328,15 @@ let cv_num_ops = CONJUNCTS CV_TR_NUM and cv_bool_ops = CONJUNCTS CV_TR_BOOL;;
 
 let cv_try_rewr ths tm = tryfind (fun th -> PART_MATCH lhs th tm) ths;;
 
+(* encoder variables left free by matching (e.g. the element encoder in    *)
+(* LENGTH's theorem) are instantiated with the canonical encoders             *)
+let cv_fix_encvars tm th =
+  let fvs = subtract (frees (concl th)) (frees tm) in
+  let evs = filter (fun v -> let n = fst(dest_var v) in
+                     String.length n > 4 && String.sub n 0 4 = "enc_") fvs in
+  if evs = [] then th else
+  INST (map (fun v -> (cv_enc_of (fst(dest_fun_ty (type_of v))), v)) evs) th;;
+
 let cv_tr_step extra tm =
   let e,t = dest_comb tm in
   if is_cond t then
@@ -356,9 +365,10 @@ let cv_tr_step extra tm =
     th else
   try extra tm with Failure _ ->
   if is_const h && can (assoc (fst(dest_const h))) (!cv_fun_thms) then
-    tryfind (fun (n,th) -> if n = fst(dest_const h) then PART_MATCH lhs th tm
-                           else failwith "")
-            (!cv_fun_thms) else
+    let th = tryfind (fun (n,th) -> if n = fst(dest_const h) then PART_MATCH lhs th tm
+                                    else failwith "")
+                     (!cv_fun_thms) in
+    cv_fix_encvars tm th else
   if is_const h && args = [] && can (assoc (fst(dest_const h))) (!cv_unfold) then
     AP_TERM e (assoc (fst(dest_const h)) (!cv_unfold)) else
   failwith ("cv_tr: cannot translate " ^ string_of_term t);;
@@ -896,7 +906,9 @@ let cv_translate_as cname0 th =
         GENL xs (MP th1 (REFL ms)) in
   let corr = GEN_ALL corr in
   cv_fun_thms := (fname, corr) :: !cv_fun_thms;
-  cv_code := code_eq :: !cv_code;
+  let cname_of th = fst(dest_const(fst(strip_comb(lhs(concl th))))) in
+  cv_code := code_eq :: filter (fun th -> not (cname_of th = cname_of code_eq))
+                               (!cv_code);
   if !cv_verbose then
     print_string ("cv_translate: " ^ fname ^ " -> " ^ cname ^
                   (if recursive then " (recursive)" else "") ^ "\n");
