@@ -37,8 +37,7 @@ let color_INDUCT,color_RECURSION =
 
 let edge_perm_INDUCT,edge_perm_RECURSION =
   define_type
-    "edge_perm = Eperm123 | Eperm132 | Eperm213 | Eperm231 | Eperm312 | \
-     Eperm321";;
+    "edge_perm = Eperm123 | Eperm132 | Eperm213 | Eperm231 | Eperm312 | Eperm321";;
 
 let addc_DEF = define
  `(addc Color0 (x:color) = x) /\

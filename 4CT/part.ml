@@ -22,8 +22,7 @@ needs "4CT/color.ml";;
 needs "4CT/coloring.ml";;
 
 let prange_INDUCT,prange_RECURSION = define_type
-  "prange = Pr55 | Pr66 | Pr77 | Pr88 | Pr99 | Pr56 | Pr67 | Pr78 | Pr89 | \
-   Pr57 | Pr68 | Pr79 | Pr58 | Pr69 | Pr59";;
+  "prange = Pr55 | Pr66 | Pr77 | Pr88 | Pr99 | Pr56 | Pr67 | Pr78 | Pr89 | Pr57 | Pr68 | Pr79 | Pr58 | Pr69 | Pr59";;
 let subpart_loc_INDUCT,subpart_loc_RECURSION = define_type
   "subpart_loc = Pspoke | Phat | Pfan1 | Pfan2 | Pfan3";;
 let part_INDUCT,part_RECURSION = define_type

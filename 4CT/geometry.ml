@@ -2131,7 +2131,7 @@ let cft_try_h hints asl w h =
   try cft_decide (cft_build hints h asl w) w
   with Failure s ->
     (if !cft_debug then
-       Printf.printf "CFACE_TAC on %s: %s\n%!" (string_of_term h) s;
+       print_string ("CFACE_TAC on " ^ string_of_term h ^ ": " ^ s ^ "\n");
      failwith s);;
 
 let cft_atom hints (asl,w) =

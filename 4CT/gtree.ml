@@ -21,9 +21,7 @@ needs "4CT/ctree.ml";;
 
 let gtree_INDUCT,gtree_RECURSION =
   define_type
- "gtree = GtreeNode gtree gtree gtree gtree | GtreeLeaf0 | GtreeLeaf1 | \
-  GtreeLeaf2 | GtreeLeaf3 | GtreeLeaf01 | GtreeLeaf12 | GtreeLeaf13 | \
-  GtreeLeaf23 | GtreeEmpty";;
+ "gtree = GtreeNode gtree gtree gtree gtree | GtreeLeaf0 | GtreeLeaf1 | GtreeLeaf2 | GtreeLeaf3 | GtreeLeaf01 | GtreeLeaf12 | GtreeLeaf13 | GtreeLeaf23 | GtreeEmpty";;
 
 let gtree_pair_INDUCT,gtree_pair_RECURSION =
   define_type "gtree_pair = GtreePair gtree gtree";;

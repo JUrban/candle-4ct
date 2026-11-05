@@ -21,8 +21,8 @@ needs "4CT/quiztree.ml";;
 
 let zpart_loc_INDUCT,zpart_loc_RECURSION = define_type
   "zpart_loc = Znil | Zhub | Zhubl | Zhubr | Zhat | Zhatl | Zhatr
-             | Zfan0l | Zfan1l | Zfan2l | Zfan3l | Zfan0r | Zfan1r | Zfan2r \
-              | Zfan3r";;
+             | Zfan0l | Zfan1l | Zfan2l | Zfan3l | Zfan0r | Zfan1r | Zfan2r
+             | Zfan3r";;
 
 let zpart_INDUCT,
   zpart_RECURSION = define_type "zpart = Zpart zpart_loc part part";;

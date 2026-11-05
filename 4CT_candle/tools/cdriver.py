@@ -128,8 +128,11 @@ def main():
             if not cmd.rstrip().endswith(";;"):
                 cmd += ";;"
             label = "cmd " + cmd[:60].replace("\n", " ")
+        elif it.startswith("use:"):
+            cmd = '#use "%s";;' % it[4:]
+            label = it
         else:
-            cmd = '#use "%s";;' % it
+            cmd = ('#use "%s";;' if it == "hol.ml" else 'needs "%s";;') % it
             label = it
         p.sendline(cmd)
         stack = []
