@@ -104,6 +104,14 @@ sized variants with the size computed beforehand.
 
 ## Status
 
-* Done: everything above; planar_graph.ml loads in Candle.
-* Running: Part 1 (A-G, P, M) on top of Multivariate; then the final
-  single-process build including Part 2 (about 5 h of computation).
+* Part 1 complete in Candle (from the Multivariate + planar_graph.ml
+  checkpoint): sections A-G, P and M in 3,590 s, including the seven
+  presentation lemmas (2,105 s), the quiz tree, the discharge bounds and the
+  Birkhoff checks; every theorem `FOUR_COLOR_*_OF_REDUCIBILITY` and
+  `FOUR_COLOR_HYPERMAP : reducibility ==> ...` is proved.
+* Part 2 (the 633 checks, all already validated separately, about 5 h of
+  Kernel.compute, on par with HOL4's cv_compute: 5 h 33 min in the
+  hol4-four-colour benchmarks) running in the same process lineage, then
+  REDUCIBILITY, the six theorems and `check_axioms ()`.
+* Profile: for cf110, Kernel.compute takes 93.7 s of about 96 s; the
+  translation and the proof wrappers are negligible.
