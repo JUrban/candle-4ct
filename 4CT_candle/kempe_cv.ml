@@ -470,11 +470,9 @@ let CV_LEN_FACTS = prove
    SUC 0 <= 1 /\ 0 < 2 /\ 0 <= 1`, ARITH_TAC);;
 
 let cvt_split i th = cvt (cv_split_clauses i th);;
-cvt_split 1 (INST_TYPE [`:color`,`:A`] take_list);;
-cvt_split 1 (INST_TYPE [`:color`,`:A`] drop_list);;
-let cvt_as_split n i th = cvt_as n (cv_split_clauses i th);;
-do_list cvt [INST_TYPE [`:color`,`:A`] rot_list;
-             INST_TYPE [`:color`,`:A`] rotr_list];;
+cvt_split 1 take_list;;
+cvt_split 1 drop_list;;
+do_list cvt [rot_list; rotr_list];;
 
 (* ------------------------------------------------------------------------- *)
 (* Configuration colourings (cfcolor.ml), with the colour-map arguments of   *)
