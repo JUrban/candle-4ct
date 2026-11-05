@@ -492,7 +492,24 @@ let rec cv_suc_pat_conv tm =
   else if is_comb tm then COMB_CONV cv_suc_pat_conv tm
   else REFL tm;;
 
+(* simultaneous lets  LET (\a b. t) x y  become nested ones                  *)
+let rec cv_simlet_conv tm =
+  let h,args = strip_comb tm in
+  if is_const h && fst(dest_const h) = "LET" && length args >= 3 then
+    let f = hd args and x = el 1 args and rest = tl(tl args) in
+    let a,body = dest_abs f in
+    let a' = variant (frees (list_mk_comb(f, x :: rest))) a in
+    let body' = vsubst [a',a] body in
+    let letc = mk_icomb(mk_const("LET",[]), mk_abs(a', list_mk_comb(
+                 mk_icomb(mk_const("LET",[]), body'), rest))) in
+    let rhs = mk_comb(letc, x) in
+    let th = prove(mk_eq(tm, rhs), REWRITE_TAC[LET_DEF] THEN
+                   CONV_TAC(DEPTH_CONV BETA_CONV) THEN REFL_TAC) in
+    th
+  else failwith "cv_simlet_conv";;
+
 let cv_prep_clause th =
+  let th = CONV_RULE (RAND_CONV (TOP_DEPTH_CONV cv_simlet_conv)) (SPEC_ALL th) in
   let th = SPEC_ALL th in
   let th = CONV_RULE (LAND_CONV (RAND_CONV cv_suc_pat_conv)) th in
   let rec fix th =
@@ -1090,7 +1107,7 @@ let rec cv_tuple_sels t n =
 let cv_lex_core_tac v : tactic =
   STRUCT_CASES_TAC (SPEC v (cases "cval")) THEN
   REWRITE_TAC (cv_measure_rw ()) THEN cv_split_ispair_tac 4 THEN
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[cval_sum_size_def] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC (SUC_SUB1 :: cv_measure_rw ()) THEN
   cv_add_size_facts THEN ARITH_TAC;;
 
 let cv_lex_tac : tactic = fun (asl,w) ->
@@ -1284,10 +1301,21 @@ let cv_translate_cluster specs =
                NUM_REDUCE_CONV THENC REWRITE_CONV[COND_CLAUSES]) mterm in
     let s,t = (match snd(strip_comb(rand(concl red))) with [s;t] -> (s,t)
                | _ -> failwith "cv_translate_cluster: measure") in
-    let lth = cv_prove_lex (filter (fun c -> not (is_eq c)) conds) s t in
+    let istag c = (is_eq c && lhs c = mk_cfst x) ||
+                  (is_neg c && is_eq (rand c) && lhs (rand c) = mk_cfst x) in
+    let ntconds = filter (fun c -> not (istag c)) conds in
+    let tagc = find (fun c -> is_eq c && lhs c = mk_cfst x) conds in
+    let j = dest_small_numeral (rand (rhs tagc)) in
+    let (_,_,_,vsj,_,_,_) = el j infos in
+    let sels = cv_tuple_sels (mk_csnd x) (length vsj) in
+    let ws = map (fun i -> mk_var("cvw" ^ string_of_int i, cv_ty)) (1--length sels) in
+    let sub = zip ws sels in
+    let conds' = map (subst sub) ntconds and s' = subst sub s and t' = subst sub t in
+    let lth =
+      if exists (vfree_in x) (s' :: t' :: conds') then cv_prove_lex ntconds s t
+      else INST (zip sels ws) (cv_prove_lex conds' s' t') in
     let lth = EQ_MP (SYM red) (PROVE_HYP (ASSUME (list_mk_comb(`LEX3`,[s;t]))) lth) in
-    let tagconds = filter is_eq conds in
-    MP ihs (itlist PROVE_HYP (map ASSUME tagconds) lth) in
+    MP ihs lth in
   let _ = if !cv_verbose then print_string "[cl:walk]" else () in
   let cth = cv_cong_cl ff gg call [] (rand(concl bf)) in
   let adm = TRANS (TRANS bf cth) (SYM bg) in

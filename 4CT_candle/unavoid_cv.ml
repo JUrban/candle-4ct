@@ -100,7 +100,9 @@ let cfq_H = new_definition
  `cfq_H rq1 rq2 rq3 qs = cfquiz_H rq1 rq2 (rqs_H rq1 rq3 qs)`;;
 let CFQ_H = REWRITE_RULE[GSYM cfq_H]
   (GEN_ALL (CONV_RULE (RAND_CONV (REWRITE_CONV[cfquiz_H])) (SPEC_ALL cfq_H)));;
-cvt CFQ_Y;; cvt CFQ_H;;
+let cv_inline_lets th =
+  CONV_RULE (DEPTH_CONV BETA_CONV) (REWRITE_RULE[LET_DEF; LET_END_DEF] th);;
+cvt (cv_inline_lets CFQ_Y);; cvt (cv_inline_lets CFQ_H);;
 
 let CFQUIZ_REC_CV =
   let c0 = SPEC_ALL (CONJUNCT1 cfquiz_rec) and c1 = SPEC_ALL (CONJUNCT2 cfquiz_rec) in
@@ -108,6 +110,7 @@ let CFQUIZ_REC_CV =
   let ty = `:bool#num#question` in
   end_itlist CONJ (CONJUNCTS (cv_inst_var qs0 (cv_list_pats ty 2) c0) @
                    CONJUNCTS (cv_inst_var qs1 (cv_list_pats ty 3) c1));;
+let CFQUIZ_REC_CV = REWRITE_RULE[GSYM cfq_Y; GSYM cfq_H] CFQUIZ_REC_CV;;
 cvt CFQUIZ_REC_CV;;
 
 (* cpradius2 and cfquiz with the ring size explicit, on cpadj_t            *)
@@ -185,4 +188,108 @@ let QZT_PUT3_PATH = prove
   REWRITE_TAC[qzt_put3; GSYM INSERT_PATH_LEAF; QZT_PUT1_PATH]);;
 cvt insert_path;;
 cvt QZT_PUT3_PATH;;
-do_list cvt [qzt_put3rot; qzt_put];;
+cvt qzt_put3rot;;
+let QZT_PUT_E = prove
+ (`!qa1 qa2 qa3 q1 q2 q3 t. qzt_put qa1 qa2 qa3 q1 q2 q3 t =
+     if 8 < nat_of_qarity qa1 then qzt_put3 qa1 qa2 qa3 q1 q2 q3 t
+     else qzt_put3rot qa1 qa2 qa3 q1 q2 q3 t`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[qzt_put] THEN COND_CASES_TAC THEN
+  REWRITE_TAC[]);;
+cvt QZT_PUT_E;;
+
+(* ------------------------------------------------------------------------- *)
+(* Quiz tree lookups and reducible parts (redpart.ml).                       *)
+(* ------------------------------------------------------------------------- *)
+
+do_list cvt [qzt_size; qzt_get1; qzt_get2; qzt_get3; qzt_getr];;
+let QZT_TRUNCATE_CLAUSES = prove
+ (`qzt_truncate QztNil = QztNil /\
+   (!q1 q2 q3 t. qzt_truncate (QztLeaf q1 q2 q3 t) = QztLeaf q1 q2 q3 t) /\
+   (!t5 t6 t7 t8. qzt_truncate (QztNode t5 t6 t7 t8) = QztNode t5 t6 t7 t8) /\
+   (!t9 t10 t11. qzt_truncate (QztHubNode QztNil t9 t10 t11) =
+   QztHubNode QztNil t9 t10 t11) /\
+   (!q1 q2 q3 t t9 t10 t11. qzt_truncate
+   (QztHubNode (QztLeaf q1 q2 q3 t) t9 t10 t11) =
+                            QztHubNode (QztLeaf q1 q2 q3 t) t9 t10 t11) /\
+   (!t5 t6 t7 t8 t9 t10 t11. qzt_truncate
+   (QztHubNode (QztNode t5 t6 t7 t8) t9 t10 t11) =
+                             QztNode t5 t6 t7 t8) /\
+   (!s9 s10 s11 s58 t9 t10 t11. qzt_truncate
+   (QztHubNode (QztHubNode s58 s9 s10 s11) t9 t10 t11) =
+                                QztHubNode (QztHubNode s58 s9 s10 s11)
+                                t9 t10 t11)`,
+  REWRITE_TAC[qzt_truncate]);;
+cvt QZT_TRUNCATE_CLAUSES;;
+
+do_list cvt [zp_zi; zp_pl; zp_pr; zproper; hub_range; zrange_loc; zrange;
+             shift_part; zshiftl_aux; zshiftl; zshiftr_aux; zshiftr; zfanL; zfanR;
+             zfanLt; zfanRt; zstepL_loc; zstepL; zstepR_loc; zstepR; zstepLt_loc;
+             zstepLt; zstepRt_loc; zstepRt; topqa; fitqa; popqa; fitqzp];;
+
+(* The cluster: red_rec is always redpart_loop qt ahub d; each red_X gets    *)
+(* the data qt ahub d instead (rps_X), with red_pcons inlined.               *)
+let rps_rr = `redpart_loop (rqt0:quiz_tree) (rah0:qarity) (rd0:num)`;;
+let rps_list =
+  [("red_popr_spoke",red_popr_spoke); ("red_popr_hat",red_popr_hat);
+   ("red_popl_spoke",red_popl_spoke); ("red_popl_hat",red_popl_hat);
+   ("red_popl_fan1l",red_popl_fan1l); ("red_popl_fan2l",red_popl_fan2l);
+   ("red_popl_fan3l",red_popl_fan3l); ("red_popl_fan1r",red_popl_fan1r);
+   ("red_popl_fan2r",red_popl_fan2r); ("red_popl_fan3r",red_popl_fan3r);
+   ("red_pop_loc",red_pop_loc); ("red_pop",red_pop); ("red_popqzp",red_popqzp);
+   ("red_qzt_leaf",red_qzt_leaf); ("red_zpart_cases",red_zpart_cases);
+   ("red_zpart_step",red_zpart_step); ("red_zpart_rec",red_zpart_rec);
+   ("red_zpart",red_zpart)];;
+
+let rps_defs = map (fun (n,_) ->
+    let c = mk_const(n,[]) in
+    let atys = tl (fst(splitlist dest_fun_ty (type_of c))) in
+    let xs = map (fun (i,ty) -> mk_var("x" ^ string_of_int i, ty))
+                 (zip (1--length atys) atys) in
+    let qt = `rqt0:quiz_tree` and ahub = `rah0:qarity` and d = `rd0:num` in
+    let lhs = list_mk_comb(mk_var("rps_" ^ n,
+                itlist (fun a t -> mk_fun_ty (type_of a) t) (qt::ahub::d::xs) bool_ty),
+                qt::ahub::d::xs) in
+    (n, new_definition (mk_eq(lhs, list_mk_comb(c, rps_rr :: xs))))) rps_list;;
+
+let rps_clauses (n, th) =
+  let cls = map SPEC_ALL (cv_clauses th) in
+  let cls = map (INST [rps_rr, `red_rec:part->bool`]) cls in
+  let fold = map (fun (_,d) -> GSYM (SPEC_ALL d)) rps_defs in
+  let simp th =
+    let th = CONV_RULE (RAND_CONV (PURE_REWRITE_CONV [red_pcons; LET_DEF; LET_END_DEF]
+                                   THENC TOP_DEPTH_CONV BETA_CONV)) th in
+    PURE_REWRITE_RULE fold th in
+  end_itlist CONJ (map (fun c -> GEN_ALL (simp c)) cls);;
+
+let REDPART_LOOP_CV = prove
+ (`(!qt ahub p'. redpart_loop qt ahub 0 p' = F) /\
+   (!qt ahub d p'. redpart_loop qt ahub (SUC d) p' =
+       rps_red_zpart qt ahub d ahub qt (rev_part p') p')`,
+  REWRITE_TAC[redpart_loop; GSYM (assoc "red_zpart" rps_defs)] THEN
+  REWRITE_TAC[assoc "red_zpart" rps_defs]);;
+
+let rps_measure off rank size vs =
+  let d = mk_comb(`cval_sum_size`, el 2 vs) in
+  let a = mk_binop `(+):num->num->num` (mk_binop `( * ):num->num->num` `2` d)
+                   (mk_small_numeral off) in
+  let c = match size with None -> `0` | Some i -> mk_comb(`cval_sum_size`, el i vs) in
+  mk_pair(a, mk_pair(mk_small_numeral rank, c));;
+
+let RPS_CLUSTER = cv_translate_cluster
+  (("cv_redpart_loop", REDPART_LOOP_CV, rps_measure 0 20 None) ::
+   map (fun (n,_) ->
+     let rank, size =
+       (match n with
+          "red_zpart" -> 19, None
+        | "red_zpart_rec" -> 18, Some 8
+        | "red_zpart_step" -> 17, None
+        | "red_zpart_cases" -> 16, None
+        | "red_qzt_leaf" -> 15, Some 10
+        | "red_popqzp" -> 14, Some 6
+        | "red_pop" -> 13, None
+        | "red_pop_loc" -> 12, None
+        | _ -> 1, None) in
+     ("cv_rps_" ^ n, rps_clauses (n, assoc n rps_list), rps_measure 1 rank size))
+   rps_list);;
+
+cvt redpart;;
