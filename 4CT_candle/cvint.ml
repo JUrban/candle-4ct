@@ -37,15 +37,10 @@ let CV_OF_INT_DIFF = prove
 
 let CV_OF_INT_11 = prove
  (`!i j. cv_of_int i = cv_of_int j <=> i = j`,
-  REPEAT GEN_TAC THEN EQ_TAC THEN SIMP_TAC[] THEN
-  ONCE_REWRITE_TAC[INT_DECOMP] THEN
-  REWRITE_TAC[CV_OF_INT_DIFF; injectivity "cval"] THEN
-  REWRITE_TAC[GSYM INT_DECOMP] THEN
-  MAP_EVERY (fun t -> MP_TAC (SPEC t INT_DECOMP)) [`i:int`; `j:int`] THEN
-  REPEAT DISCH_TAC THEN STRIP_TAC THEN
-  ONCE_ASM_REWRITE_TAC[] THEN
-  REWRITE_TAC[INT_ARITH `&a - &b:int = &c - &d <=> &a + &d:int = &c + &b`] THEN
-  REWRITE_TAC[INT_OF_NUM_ADD; INT_OF_NUM_EQ] THEN ASM_ARITH_TAC);;
+  REPEAT GEN_TAC THEN EQ_TAC THENL
+   [REWRITE_TAC[cv_of_int; injectivity "cval"] THEN STRIP_TAC THEN
+    ONCE_REWRITE_TAC[INT_DECOMP] THEN ASM_REWRITE_TAC[];
+    SIMP_TAC[]]);;
 
 cv_types := ("int", (`cv_of_int`, [], cv_of_int)) :: !cv_types;;
 cv_inj := ("int", CV_OF_INT_11) :: !cv_inj;;
@@ -54,7 +49,7 @@ cv_inj := ("int", CV_OF_INT_11) :: !cv_inj;;
 let cvi_norm = new_definition
  `cvi_norm x y = Cexp_pair (Cexp_sub x y) (Cexp_sub y x)`;;
 let cvi_of_num = new_definition `cvi_of_num v = Cexp_pair v (Cexp_num 0)`;;
-let cvi_neg = new_definition `cvi_neg v = Cexp_pair (Cexp_snd v) (Cexp_fst v)`;;
+let cvi_neg = new_definition `cvi_neg v = cvi_norm (Cexp_snd v) (Cexp_fst v)`;;
 let cvi_add = new_definition
  `cvi_add v w = cvi_norm (Cexp_add (Cexp_fst v) (Cexp_fst w))
                          (Cexp_add (Cexp_snd v) (Cexp_snd w))`;;
@@ -85,60 +80,75 @@ let CVI_DECOMP_TAC =
   REWRITE_TAC[CV_OF_INT_DIFF] THEN
   REWRITE_TAC[GSYM INT_DECOMP];;
 
+let CVI_GEN_TAC =
+  MAP_EVERY (fun t -> MP_TAC (SPEC t INT_DECOMP)) [`i:int`; `j:int`] THEN
+  MAP_EVERY SPEC_TAC [(`int_negp j`,`d:num`); (`int_pos j`,`c:num`);
+                      (`int_negp i`,`b:num`); (`int_pos i`,`a:num`)] THEN
+  REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN ASM_REWRITE_TAC[];;
+let INT_LT_POS = prove
+ (`!i j. i < j <=> int_pos i + int_negp j < int_pos j + int_negp i`,
+  REPEAT GEN_TAC THEN CVI_GEN_TAC THEN
+  REWRITE_TAC[INT_ARITH `(&a:int) - &b < &c - &d:int <=> (&a:int) + &d < &c + &b`;
+              INT_OF_NUM_ADD; INT_OF_NUM_LT]);;
+let INT_LE_POS = prove
+ (`!i j. i <= j <=> int_pos i + int_negp j <= int_pos j + int_negp i`,
+  REPEAT GEN_TAC THEN CVI_GEN_TAC THEN
+  REWRITE_TAC[INT_ARITH `(&a:int) - &b <= &c - &d:int <=> (&a:int) + &d <= &c + &b`;
+              INT_OF_NUM_ADD; INT_OF_NUM_LE]);;
+
+let INT_NEG_DECOMP = prove
+ (`!i. --i = &(int_negp i) - &(int_pos i)`,
+  GEN_TAC THEN MP_TAC (SPEC `i:int` INT_DECOMP) THEN
+  SPEC_TAC(`int_negp i`,`b:num`) THEN SPEC_TAC(`int_pos i`,`a:num`) THEN
+  REPEAT GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN INT_ARITH_TAC);;
+let INT_ADD_DECOMP = prove
+ (`!i j. i + j = &(int_pos i + int_pos j) - &(int_negp i + int_negp j)`,
+  REPEAT GEN_TAC THEN CVI_GEN_TAC THEN REWRITE_TAC[GSYM INT_OF_NUM_ADD] THEN
+  INT_ARITH_TAC);;
+let INT_SUB_DECOMP = prove
+ (`!i j. i - j = &(int_pos i + int_negp j) - &(int_negp i + int_pos j)`,
+  REPEAT GEN_TAC THEN CVI_GEN_TAC THEN REWRITE_TAC[GSYM INT_OF_NUM_ADD] THEN
+  INT_ARITH_TAC);;
+let INT_MUL_DECOMP = prove
+ (`!i j. i * j = &(int_pos i * int_pos j + int_negp i * int_negp j) -
+                 &(int_pos i * int_negp j + int_negp i * int_pos j)`,
+  REPEAT GEN_TAC THEN CVI_GEN_TAC THEN
+  REWRITE_TAC[GSYM INT_OF_NUM_ADD; GSYM INT_OF_NUM_MUL] THEN
+  CONV_TAC INT_RING);;
+
+let CVI_OP_TAC decomp =
+  REPEAT GEN_TAC THEN GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [decomp] THEN
+  REWRITE_TAC[CV_OF_INT_DIFF] THEN
+  REWRITE_TAC[cv_of_int] THEN REWRITE_TAC CVI_RW;;
+
 let CV_INT_THMS = [
   ("int_of_num", prove
    (`!n. cv_of_int (&n) = cvi_of_num (Cexp_num n)`,
     GEN_TAC THEN ONCE_REWRITE_TAC[INT_ARITH `&n:int = &n - &0`] THEN
     REWRITE_TAC[CV_OF_INT_DIFF; cvi_of_num; SUB_0; ARITH_RULE `0 - n = 0`]));
   ("int_neg", prove
-   (`!i. cv_of_int (--i) = cvi_neg (cv_of_int i)`,
-    GEN_TAC THEN ONCE_REWRITE_TAC[SPEC `i:int` INT_DECOMP] THEN
-    REWRITE_TAC[INT_NEG_SUB; CV_OF_INT_DIFF; cvi_neg; cexp_fst_def;
-                cexp_snd_def]));
+   (`!i. cv_of_int (--i) = cvi_neg (cv_of_int i)`, CVI_OP_TAC INT_NEG_DECOMP));
   ("int_add", prove
    (`!i j. cv_of_int (i + j) = cvi_add (cv_of_int i) (cv_of_int j)`,
-    REPEAT GEN_TAC THEN
-    MAP_EVERY (fun t -> ONCE_REWRITE_TAC[SPEC t INT_DECOMP]) [`i:int`; `j:int`] THEN
-    REWRITE_TAC[INT_ARITH `(&a - &b) + (&c - &d):int = &(a + c) - &(b + d)`;
-                GSYM INT_OF_NUM_ADD] THEN
-    REWRITE_TAC[CV_OF_INT_DIFF] THEN REWRITE_TAC CVI_RW));
+    CVI_OP_TAC INT_ADD_DECOMP));
   ("int_sub", prove
    (`!i j. cv_of_int (i - j) = cvi_sub (cv_of_int i) (cv_of_int j)`,
-    REPEAT GEN_TAC THEN
-    MAP_EVERY (fun t -> ONCE_REWRITE_TAC[SPEC t INT_DECOMP]) [`i:int`; `j:int`] THEN
-    REWRITE_TAC[INT_ARITH `(&a - &b) - (&c - &d):int = &(a + d) - &(b + c)`;
-                GSYM INT_OF_NUM_ADD] THEN
-    REWRITE_TAC[CV_OF_INT_DIFF] THEN REWRITE_TAC CVI_RW));
+    CVI_OP_TAC INT_SUB_DECOMP));
   ("int_mul", prove
    (`!i j. cv_of_int (i * j) = cvi_mul (cv_of_int i) (cv_of_int j)`,
-    REPEAT GEN_TAC THEN
-    MAP_EVERY (fun t -> ONCE_REWRITE_TAC[SPEC t INT_DECOMP]) [`i:int`; `j:int`] THEN
-    REWRITE_TAC[INT_ARITH `(&a - &b) * (&c - &d):int =
-                           &(a * c + b * d) - &(a * d + b * c)`;
-                GSYM INT_OF_NUM_ADD; GSYM INT_OF_NUM_MUL] THEN
-    REWRITE_TAC[CV_OF_INT_DIFF] THEN REWRITE_TAC CVI_RW));
+    CVI_OP_TAC INT_MUL_DECOMP));
   ("int_lt", prove
    (`!i j. cv_of_bool (i < j) = cvi_lt (cv_of_int i) (cv_of_int j)`,
     REPEAT GEN_TAC THEN
-    MAP_EVERY (fun t -> ONCE_REWRITE_TAC[SPEC t INT_DECOMP]) [`i:int`; `j:int`] THEN
-    REWRITE_TAC[CV_OF_INT_DIFF] THEN REWRITE_TAC CVI_RW THEN
-    REWRITE_TAC[INT_ARITH `(&a - &b) < (&c - &d):int <=> &(a + d) < &(c + b)`;
-                GSYM INT_OF_NUM_ADD; INT_OF_NUM_LT] THEN
-    REWRITE_TAC[injectivity "cval"] THEN
-    MAP_EVERY (fun t -> MP_TAC (SPEC t INT_DECOMP)) [`i:int`; `j:int`] THEN
-    REWRITE_TAC[int_pos; int_negp] THEN REPEAT COND_CASES_TAC THEN
-    REWRITE_TAC[] THEN ARITH_TAC));
+    REWRITE_TAC[cv_of_int; cvi_lt; cexp_fst_def; cexp_snd_def; cexp_add_def;
+                cexp_less_def; cv_of_bool; injectivity "cval"; GSYM ONE] THEN
+    REWRITE_TAC[INT_LT_POS]));
   ("int_le", prove
    (`!i j. cv_of_bool (i <= j) = cvi_le (cv_of_int i) (cv_of_int j)`,
     REPEAT GEN_TAC THEN
-    MAP_EVERY (fun t -> ONCE_REWRITE_TAC[SPEC t INT_DECOMP]) [`i:int`; `j:int`] THEN
-    REWRITE_TAC[CV_OF_INT_DIFF] THEN REWRITE_TAC CVI_RW THEN
-    REWRITE_TAC[INT_ARITH `(&a - &b) <= (&c - &d):int <=> &(a + d) <= &(c + b)`;
-                GSYM INT_OF_NUM_ADD; INT_OF_NUM_LE] THEN
-    REWRITE_TAC[injectivity "cval"] THEN
-    MAP_EVERY (fun t -> MP_TAC (SPEC t INT_DECOMP)) [`i:int`; `j:int`] THEN
-    REWRITE_TAC[int_pos; int_negp] THEN REPEAT COND_CASES_TAC THEN
-    REWRITE_TAC[] THEN ARITH_TAC));
+    REWRITE_TAC[cv_of_int; cvi_le; cexp_fst_def; cexp_snd_def; cexp_add_def;
+                cexp_less_def; cv_of_bool; injectivity "cval"; GSYM ONE] THEN
+    REWRITE_TAC[INT_LE_POS; LT_SUC_LE; GSYM ADD1]));
   ("int_pos", prove
    (`!i. Cexp_num (int_pos i) = cvi_pos (cv_of_int i)`,
     REWRITE_TAC[cvi_pos; cv_of_int; cexp_fst_def]))];;

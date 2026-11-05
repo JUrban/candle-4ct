@@ -962,6 +962,10 @@ let cv_add_unfold th =
 let rec cv_decode ty v =
   if ty = `:num` then rand v
   else if ty = bool_ty then (if rand v = `0` then `F` else `T`)
+  else if ty = `:int` then
+    (let l,b = dest_comb v in let a = rand (rand l) and b = rand b in
+     if b = `0` then mk_comb(`int_of_num`, a)
+     else mk_comb(`int_neg`, mk_comb(`int_of_num`, b)))
   else
     let name,args = dest_type ty in
     if name = "prod" then
@@ -996,7 +1000,12 @@ let cv_eval tm =
   let th2 = compute (!cv_code) (rand(concl th1)) in
   let v = rand(concl th2) in
   let x = cv_decode ty v in
-  let th3 = PURE_REWRITE_CONV (!cv_enc_clauses @ [CV_OF_PROD_PAIR; CV_OF_BOOL_CLAUSES])
-              (mk_comb(e, x)) in
+  let th3 =
+    try let t = PURE_REWRITE_CONV (!cv_enc_clauses @ [CV_OF_PROD_PAIR;
+                                    CV_OF_BOOL_CLAUSES]) (mk_comb(e, x)) in
+        if rand(concl t) = v then t else failwith ""
+    with Failure _ ->
+      let t1 = cv_tr (fun _ -> failwith "") (mk_comb(e, x)) in
+      TRANS t1 (compute (!cv_code) (rand(concl t1))) in
   let inj = cv_inj_of ty in
   EQ_MP (SPECL [tm; x] inj) (TRANS (TRANS th1 th2) (SYM th3));;
