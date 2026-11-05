@@ -293,3 +293,285 @@ let RPS_CLUSTER = cv_translate_cluster
    rps_list);;
 
 cvt redpart;;
+
+(* ------------------------------------------------------------------------- *)
+(* Discharge rules (discharge.ml).                                           *)
+(* ------------------------------------------------------------------------- *)
+
+(* simultaneous lets as nested lets (keeps the sharing)                       *)
+let rec cv_simlet_conv2 tm =
+  let h,args = strip_comb tm in
+  if is_const h && fst(dest_const h) = "LET" && length args >= 3 then
+    let f = hd args and x = el 1 args and rest = tl(tl args) in
+    let a,body = dest_abs f in
+    let a' = variant (frees (list_mk_comb(f, x :: rest))) a in
+    let body' = vsubst [a',a] body in
+    let inner = list_mk_comb(mk_icomb(mk_const("LET",[]), body'), rest) in
+    let letc = mk_icomb(mk_const("LET",[]),
+                 mk_abs(a', mk_icomb(mk_const("LET_END",[]), inner))) in
+    prove(mk_eq(tm, mk_comb(letc, x)), REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+          CONV_TAC(DEPTH_CONV BETA_CONV) THEN REFL_TAC)
+  else failwith "cv_simlet_conv2";;
+let cv_nest_lets th = end_itlist CONJ (map (fun c ->
+    GEN_ALL (CONV_RULE (RAND_CONV (TOP_DEPTH_CONV cv_simlet_conv2)) c))
+    (cv_clauses th));;
+
+do_list cv_add_unfold
+  [drule1; drule2; drule2_P; drule3; drule3_P; drule4; drule4_P; drule5;
+   drule6; drule7; drule8; drule9; drule10; drule10_P; drule11; drule12;
+   drule13; drule14; drule15; drule16; drule17; drule18; drule19; drule20;
+   drule21; drule22; drule23; drule24; drule25; drule26; drule27; drule28;
+   drule29; drule30; drule31; drule31_P; drule32; base_drules];;
+
+let SYM_DRULE_CV = prove
+ (`!p. sym_drule p =
+       let k = size_part p - 1 in
+       rot_part k (rot_part k (rot_part k (rot_part k (rot_part k
+         (mirror_part p)))))`,
+  GEN_TAC THEN REWRITE_TAC[sym_drule; LET_DEF; LET_END_DEF] THEN
+  REWRITE_TAC[ARITH_RULE `5 = SUC(SUC(SUC(SUC(SUC 0))))`; ITER]);;
+do_list cvt [SYM_DRULE_CV; symmetrize_drules];;
+cv_add_unfold the_drules;;
+
+let psd = define
+ `(psd nhub [] = []) /\
+  (psd nhub (CONS p r) = if size_part p = nhub then CONS p (psd nhub r)
+                         else psd nhub r)`;;
+let PICK_SOURCE_PSD = prove
+ (`!nhub r. pick_source_drules nhub r = psd nhub r`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[pick_source_drules; FILTER; psd] THEN
+  REWRITE_TAC[GSYM pick_source_drules] THEN ASM_REWRITE_TAC[]);;
+do_list cvt [psd; sort_drules_rec; sort_drules; dboundK];;
+
+(* the drule forks for hub sizes 5..11: the converse parts of the explicit  *)
+(* rules by rewriting                                                        *)
+let THE_DRULES_VALUE = cv_eval `the_drules`;;
+let cv_drop_num_conv tm =
+  match strip_comb tm with
+    (c,[n;p]) when is_const c && fst(dest_const c) = "drop_part" &&
+                   is_numeral n && not (n = `0`) ->
+      (RATOR_CONV (RAND_CONV num_CONV) THENC REWRITE_CONV[drop_part]) tm
+  | _ -> failwith "cv_drop_num_conv";;
+let cv_converse_step =
+  REWRITE_CONV[converse_part; conv_part4; conv_part5; conv_part12; conv_part3;
+               cp4_aux; cp12_auxA; cp12_auxB; cp12_auxC; cp3_1; cp3_2; cp3_3;
+               pcons_s; drop_part; LET_DEF; LET_END_DEF; FST; SND; COND_CLAUSES;
+               distinctness "prange"; GSYM (distinctness "prange")] THENC
+  TOP_DEPTH_CONV BETA_CONV THENC
+  TRY_CONV (ONCE_DEPTH_CONV cv_drop_num_conv);;
+let cv_converse_conv = REPEATC (CHANGED_CONV cv_converse_step);;
+let CONVERSE_VALUES =
+  map (fun p -> cv_converse_conv (mk_comb(`converse_part`, p)))
+      (dest_list (rhs (concl THE_DRULES_VALUE)));;
+let pick_target_cv = define
+ `(pick_target_cv nhub [] = []) /\
+  (pick_target_cv nhub (CONS (rq:prange#part) l) =
+     if mem_range (FST rq) nhub then CONS (SND rq) (pick_target_cv nhub l)
+     else pick_target_cv nhub l)`;;
+let PICK_TARGET_CV = prove
+ (`!nhub l. pick_target_drules nhub l = pick_target_cv nhub (MAP converse_part l)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[pick_target_drules; pick_target_cv; MAP]);;
+let drule_conv_data = new_definition
+ `drule_conv_data = MAP converse_part the_drules`;;
+let DRULE_CONV_DATA =
+  REWRITE_RULE CONVERSE_VALUES (REWRITE_RULE[THE_DRULES_VALUE; MAP] drule_conv_data);;
+let the_drule_fork_cv = new_definition
+ `the_drule_fork_cv nhub = (psd nhub the_drules, pick_target_cv nhub drule_conv_data)`;;
+let THE_DRULE_FORK_CV = prove
+ (`!nhub. the_drule_fork nhub = the_drule_fork_cv nhub`,
+  REWRITE_TAC[the_drule_fork; the_drule_fork_cv; PICK_SOURCE_PSD; PICK_TARGET_CV;
+              drule_conv_data]);;
+cvt pick_target_cv;;
+cv_add_unfold DRULE_CONV_DATA;;
+cvt the_drule_fork_cv;;
+cv_fun_thms := ("the_drule_fork",
+   REWRITE_RULE[GSYM THE_DRULE_FORK_CV] (assoc "the_drule_fork_cv" (!cv_fun_thms)))
+   :: !cv_fun_thms;;
+
+(* ------------------------------------------------------------------------- *)
+(* The quiz tree (present.ml the_quiz_tree), with the ring sizes of the      *)
+(* configurations given by cprsize_conv.                                     *)
+(* ------------------------------------------------------------------------- *)
+
+do_list cvt [normq; isQaskLR; qLR_l; qLR_r];;
+cvt (cv_nest_lets store_qz_aux);;
+do_list cvt [store_qz; store_cf_qz];;
+let QZT_EMPTY_VALUE =
+  CONV_RULE (RAND_CONV (REWRITE_CONV[LET_DEF; LET_END_DEF] THENC
+                        TOP_DEPTH_CONV BETA_CONV)) qzt_empty;;
+cv_add_unfold QZT_EMPTY_VALUE;;
+
+let cfqt_t = define
+ `(cfqt_t qt [] = qt) /\
+  (cfqt_t qt (CONS (((cf:(cpstep)list#(num)list),sy),n) rest) =
+     let qt2 = store_cf_qz (cfquiz_t n cf) sy qt in
+     if isQztHubNode qt2 then cfqt_t qt2 rest else QztNil)`;;
+let cfqt_ok = define
+ `(cfqt_ok [] = T) /\
+  (cfqt_ok (CONS (((cf:(cpstep)list#(num)list),(sy:bool)),(n:num)) rest) <=>
+     cfquiz_ok n cf /\ cfqt_ok rest)`;;
+do_list cvt [cfqt_t; cfqt_ok];;
+let CFQT_T = prove
+ (`!l qt. ALL (\x. SND x = cprsize (cfprog (FST (FST x)))) l /\ cfqt_ok l
+          ==> cfquiz_tree_rec qt (MAP FST l) = cfqt_t qt l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; cfquiz_tree_rec; cfqt_t] THEN
+  STRUCT_CASES_TAC (ISPEC `h:((cpstep list # num list) # bool) # num` PAIR_SURJECTIVE) THEN
+  STRUCT_CASES_TAC (ISPEC `x:(cpstep list # num list) # bool` PAIR_SURJECTIVE) THEN
+  REWRITE_TAC[cfqt_t; cfqt_ok; ALL; FST; SND] THEN
+  REPEAT STRIP_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o check (is_eq o concl)) THEN
+  ASM_SIMP_TAC[CFQUIZ_T]);;
+
+let cv_config_defs_u = [cf001;cf002;cf003;cf004;cf005;cf006;cf007;cf008;cf009;cf010;cf011;cf012;cf013;cf014;cf015;cf016;cf017;cf018;cf019;cf020;cf021;cf022;cf023;cf024;cf025;cf026;cf027;cf028;cf029;cf030;cf031;cf032;cf033;cf034;cf035;cf036;cf037;cf038;cf039;cf040;cf041;cf042;cf043;cf044;cf045;cf046;cf047;cf048;cf049;cf050;cf051;cf052;cf053;cf054;cf055;cf056;cf057;cf058;cf059;cf060;cf061;cf062;cf063;cf064;cf065;cf066;cf067;cf068;cf069;cf070;cf071;cf072;cf073;cf074;cf075;cf076;cf077;cf078;cf079;cf080;cf081;cf082;cf083;cf084;cf085;cf086;cf087;cf088;cf089;cf090;cf091;cf092;cf093;cf094;cf095;cf096;cf097;cf098;cf099;cf100;cf101;cf102;cf103;cf104;cf105;cf106;cf107;cf108;cf109;cf110;cf111;cf112;cf113;cf114;cf115;cf116;cf117;cf118;cf119;cf120;cf121;cf122;cf123;cf124;cf125;cf126;cf127;cf128;cf129;cf130;cf131;cf132;cf133;cf134;cf135;cf136;cf137;cf138;cf139;cf140;cf141;cf142;cf143;cf144;cf145;cf146;cf147;cf148;cf149;cf150;cf151;cf152;cf153;cf154;cf155;cf156;cf157;cf158;cf159;cf160;cf161;cf162;cf163;cf164;cf165;cf166;cf167;cf168;cf169;cf170;cf171;cf172;cf173;cf174;cf175;cf176;cf177;cf178;cf179;cf180;cf181;cf182;cf183;cf184;cf185;cf186;cf187;cf188;cf189;cf190;cf191;cf192;cf193;cf194;cf195;cf196;cf197;cf198;cf199;cf200;cf201;cf202;cf203;cf204;cf205;cf206;cf207;cf208;cf209;cf210;cf211;cf212;cf213;cf214;cf215;cf216;cf217;cf218;cf219;cf220;cf221;cf222;cf223;cf224;cf225;cf226;cf227;cf228;cf229;cf230;cf231;cf232;cf233;cf234;cf235;cf236;cf237;cf238;cf239;cf240;cf241;cf242;cf243;cf244;cf245;cf246;cf247;cf248;cf249;cf250;cf251;cf252;cf253;cf254;cf255;cf256;cf257;cf258;cf259;cf260;cf261;cf262;cf263;cf264;cf265;cf266;cf267;cf268;cf269;cf270;cf271;cf272;cf273;cf274;cf275;cf276;cf277;cf278;cf279;cf280;cf281;cf282;cf283;cf284;cf285;cf286;cf287;cf288;cf289;cf290;cf291;cf292;cf293;cf294;cf295;cf296;cf297;cf298;cf299;cf300;cf301;cf302;cf303;cf304;cf305;cf306;cf307;cf308;cf309;cf310;cf311;cf312;cf313;cf314;cf315;cf316;cf317;cf318;cf319;cf320;cf321;cf322;cf323;cf324;cf325;cf326;cf327;cf328;cf329;cf330;cf331;cf332;cf333;cf334;cf335;cf336;cf337;cf338;cf339;cf340;cf341;cf342;cf343;cf344;cf345;cf346;cf347;cf348;cf349;cf350;cf351;cf352;cf353;cf354;cf355;cf356;cf357;cf358;cf359;cf360;cf361;cf362;cf363;cf364;cf365;cf366;cf367;cf368;cf369;cf370;cf371;cf372;cf373;cf374;cf375;cf376;cf377;cf378;cf379;cf380;cf381;cf382;cf383;cf384;cf385;cf386;cf387;cf388;cf389;cf390;cf391;cf392;cf393;cf394;cf395;cf396;cf397;cf398;cf399;cf400;cf401;cf402;cf403;cf404;cf405;cf406;cf407;cf408;cf409;cf410;cf411;cf412;cf413;cf414;cf415;cf416;cf417;cf418;cf419;cf420;cf421;cf422;cf423;cf424;cf425;cf426;cf427;cf428;cf429;cf430;cf431;cf432;cf433;cf434;cf435;cf436;cf437;cf438;cf439;cf440;cf441;cf442;cf443;cf444;cf445;cf446;cf447;cf448;cf449;cf450;cf451;cf452;cf453;cf454;cf455;cf456;cf457;cf458;cf459;cf460;cf461;cf462;cf463;cf464;cf465;cf466;cf467;cf468;cf469;cf470;cf471;cf472;cf473;cf474;cf475;cf476;cf477;cf478;cf479;cf480;cf481;cf482;cf483;cf484;cf485;cf486;cf487;cf488;cf489;cf490;cf491;cf492;cf493;cf494;cf495;cf496;cf497;cf498;cf499;cf500;cf501;cf502;cf503;cf504;cf505;cf506;cf507;cf508;cf509;cf510;cf511;cf512;cf513;cf514;cf515;cf516;cf517;cf518;cf519;cf520;cf521;cf522;cf523;cf524;cf525;cf526;cf527;cf528;cf529;cf530;cf531;cf532;cf533;cf534;cf535;cf536;cf537;cf538;cf539;cf540;cf541;cf542;cf543;cf544;cf545;cf546;cf547;cf548;cf549;cf550;cf551;cf552;cf553;cf554;cf555;cf556;cf557;cf558;cf559;cf560;cf561;cf562;cf563;cf564;cf565;cf566;cf567;cf568;cf569;cf570;cf571;cf572;cf573;cf574;cf575;cf576;cf577;cf578;cf579;cf580;cf581;cf582;cf583;cf584;cf585;cf586;cf587;cf588;cf589;cf590;cf591;cf592;cf593;cf594;cf595;cf596;cf597;cf598;cf599;cf600;cf601;cf602;cf603;cf604;cf605;cf606;cf607;cf608;cf609;cf610;cf611;cf612;cf613;cf614;cf615;cf616;cf617;cf618;cf619;cf620;cf621;cf622;cf623;cf624;cf625;cf626;cf627;cf628;cf629;cf630;cf631;cf632;cf633];;
+let CPRSIZE_CONFIGS = map (fun cfdef ->
+    let cf = lhs (concl cfdef) in
+    let cp = fst (dest_pair (rhs (concl cfdef))) in
+    TRANS (REWRITE_CONV[cfprog; cfdef; FST] (mk_comb(`cprsize`, mk_comb(`cfprog`, cf))))
+          (cprsize_conv (mk_comb (`cprsize`, cp)))) cv_config_defs_u;;
+let the_cf_sizes = new_definition
+  (mk_eq(`the_cf_sizes:num list`,
+         mk_list(map (fun th -> rhs(concl th)) CPRSIZE_CONFIGS, `:num`)));;
+let cf_triples = new_definition
+  `cf_triples = ZIP (ZIP the_configs the_configs_sym) the_cf_sizes`;;
+let MAP_FST_ZIP_CV = prove
+ (`!l1:A list l2:B list. LENGTH l1 = LENGTH l2 ==> MAP FST (ZIP l1 l2) = l1`,
+  LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_SIMP_TAC[ZIP; MAP; LENGTH; NOT_SUC; SUC_INJ; FST]);;
+let CF_TRIPLES_FST = prove
+ (`MAP FST cf_triples = ZIP the_configs the_configs_sym`,
+  REWRITE_TAC[cf_triples] THEN MATCH_MP_TAC MAP_FST_ZIP_CV THEN
+  REWRITE_TAC[the_configs; the_configs_sym; the_cf_sizes; ZIP; LENGTH] THEN
+  CONV_TAC NUM_REDUCE_CONV);;
+let CF_TRIPLES_SIZES = prove
+ (`ALL (\x. SND x = cprsize (cfprog (FST (FST x)))) cf_triples`,
+  REWRITE_TAC[cf_triples; the_configs; the_configs_sym; the_cf_sizes; ZIP; ALL;
+              FST; SND] THEN REWRITE_TAC CPRSIZE_CONFIGS);;
+let CF_TRIPLES_LIST = REWRITE_CONV[cf_triples; the_configs; the_configs_sym;
+                                    the_cf_sizes; ZIP] `cf_triples`;;
+do_list cv_add_unfold (cv_config_defs_u @ [CF_TRIPLES_LIST]);;
+let CF_TRIPLES_OK = EQT_ELIM (cv_eval `cfqt_ok cf_triples`);;
+let THE_QUIZ_TREE_CV = prove
+ (`the_quiz_tree = cfqt_t qzt_empty cf_triples`,
+  REWRITE_TAC[the_quiz_tree; cfquiz_tree; GSYM CF_TRIPLES_FST] THEN
+  MATCH_MP_TAC CFQT_T THEN REWRITE_TAC[CF_TRIPLES_SIZES; CF_TRIPLES_OK]);;
+(* evaluate it once; the quiz tree's code is then its value                 *)
+let THE_QUIZ_TREE_ENC =
+  let th1 = cv_tr (fun _ -> failwith "")
+              (mk_comb(`cv_of_quiz_tree`, rhs(concl THE_QUIZ_TREE_CV))) in
+  let th2 = cv_compute (rand(concl th1)) in
+  TRANS (AP_TERM `cv_of_quiz_tree` THE_QUIZ_TREE_CV) (TRANS th1 th2);;
+let cv_the_quiz_tree = new_definition
+  (mk_eq(`cv_the_quiz_tree:cval`, rhs(concl THE_QUIZ_TREE_ENC)));;
+cv_fun_thms := ("the_quiz_tree", TRANS THE_QUIZ_TREE_ENC (SYM cv_the_quiz_tree))
+               :: !cv_fun_thms;;
+cv_code := cv_the_quiz_tree :: !cv_code;;
+
+(* ------------------------------------------------------------------------- *)
+(* The discharge bound checks and hubcaps (hubcap.ml), with the reducibility *)
+(* predicate redp fixed to redpart the_quiz_tree.                            *)
+(* ------------------------------------------------------------------------- *)
+
+let cv_rp = `redpart the_quiz_tree`;;
+(* f redp args = f_rp args, and the clauses of f_rp                         *)
+let cv_specialize_redp name th =
+  let c = mk_const(name, []) in
+  let atys,rty0 = splitlist dest_fun_ty (type_of c) in
+  let k = index `:part->bool` atys in
+  let otys = map snd (filter (fun (i,_) -> not (i = k))
+                        (zip (0--(length atys - 1)) atys)) in
+  let xs = map (fun (i,ty) -> mk_var("y" ^ string_of_int i, ty))
+               (zip (1--length otys) otys) in
+  let rty = itlist (fun a t -> mk_fun_ty (type_of a) t) xs rty0 in
+  let xs1,xs2 = chop_list k xs in
+  let def = new_definition (mk_eq(list_mk_comb(mk_var(name ^ "_rp", rty), xs),
+                                  list_mk_comb(c, xs1 @ [cv_rp] @ xs2))) in
+  (def, th);;
+let cv_rp_clauses defs th =
+  let cls = map (INST [cv_rp, `redp:part->bool`] o SPEC_ALL) (cv_clauses th) in
+  let fold = map (fun d -> GSYM (SPEC_ALL d)) defs in
+  end_itlist CONJ (map (fun c -> GEN_ALL (PURE_REWRITE_RULE fold c)) cls);;
+
+let nth0_cv = define
+ `(nth0_cv ([]:num list) i = 0) /\
+  (nth0_cv (CONS h t) i = if i = 0 then h else nth0_cv t (i - 1))`;;
+let NTH0_CV = prove
+ (`!v i. nth0 v i = nth0_cv v i`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[nth0; nth0_cv; LENGTH; CONJUNCT1 LT] THEN
+  GEN_TAC THEN FIRST_X_ASSUM(fun th -> REWRITE_TAC[GSYM th]) THEN
+  STRUCT_CASES_TAC(SPEC `i:num` num_CASES) THEN
+  REWRITE_TAC[NOT_SUC; EL; HD; TL; LT_0; LT_SUC; SUC_SUB1; nth0]);;
+do_list cvt [nth0_cv; incr_nth; check_unfit; tally_hubcap];;
+cvt (cv_nest_lets (REWRITE_RULE[NTH0_CV] hubcap_cover_rec));;
+cvt (cv_nest_lets (REWRITE_RULE[NTH0_CV] hubcap_cover));;
+do_list cvt [hubcap_rot; hub_subn];;
+
+let CHECK_DBOUND1_REC_RP_DEF = fst (cv_specialize_redp "check_dbound1_rec" check_dbound1_rec);;
+let CHECK_DBOUND1_REC_RP =
+  cv_split_clauses 1 (cv_rp_clauses [CHECK_DBOUND1_REC_RP_DEF] check_dbound1_rec);;
+cvt (cv_nest_lets CHECK_DBOUND1_REC_RP);;
+let CHECK_DBOUND1_RP_DEF = fst (cv_specialize_redp "check_dbound1" check_dbound1);;
+cvt (cv_rp_clauses [CHECK_DBOUND1_REC_RP_DEF; CHECK_DBOUND1_RP_DEF] check_dbound1);;
+
+(* Coq unavoidability.v:33: the four closed boolean evaluations             *)
+let THE_DBOUND1_CHECK = prove
+ (`!n. 5 <= n /\ n <= 8
+       ==> check_dbound1 (redpart the_quiz_tree) (the_drule_fork n)
+       (pcons_ n) 5`,
+  REWRITE_TAC[ARITH_RULE
+    `5 <= n /\ n <= 8 <=> n = 5 \/ n = 6 \/ n = 7 \/ n = 8`] THEN
+  REWRITE_TAC[GSYM CHECK_DBOUND1_RP_DEF] THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM SUBST1_TAC THEN
+  CONV_TAC(fun tm -> cv_eval tm));;
+
+(* single and dual target bound checks; num_of_int is int_pos under v >= 0  *)
+let CHECK_DBOUND2_REC_RP_DEF =
+  fst (cv_specialize_redp "check_dbound2_rec" check_dbound2_rec);;
+let CHECK_DBOUND2_REC_RP =
+  cv_split_clauses 1 (cv_rp_clauses [CHECK_DBOUND2_REC_RP_DEF] check_dbound2_rec);;
+cvt (cv_nest_lets CHECK_DBOUND2_REC_RP);;
+let check_dbound2_t = define
+ `check_dbound2_t rf p (b:int) =
+    let sdt = sort_drules p (SND rf) in
+    let sds = sort_drules p (FST rf) in
+    let v = &(FST sds) - &(FST sdt) + b in
+    if v < &0 then F
+    else check_dbound2_rec_rp p (SND sdt) (SND sds) [] (int_pos v)
+           (LENGTH (SND sdt) + 2)`;;
+let CV_INT_POS_TAC defs =
+  REPEAT GEN_TAC THEN REWRITE_TAC(defs @ [LET_DEF; LET_END_DEF]) THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
+  FIRST_X_ASSUM(ASSUME_TAC o REWRITE_RULE[INT_NOT_LT]) THEN
+  ASM_SIMP_TAC[NUM_OF_INT_POS];;
+let CHECK_DBOUND2_T = prove
+ (`!rf p b. check_dbound2 (redpart the_quiz_tree) rf p b = check_dbound2_t rf p b`,
+  CV_INT_POS_TAC [check_dbound2; check_dbound2_t; CHECK_DBOUND2_REC_RP_DEF]);;
+cvt check_dbound2_t;;
+
+let CHECK_2DBOUND2_REC_RP_DEF =
+  fst (cv_specialize_redp "check_2dbound2_rec" check_2dbound2_rec);;
+let CHECK_2DBOUND2_REC_RP =
+  cv_split_clauses 3 (cv_rp_clauses [CHECK_2DBOUND2_REC_RP_DEF] check_2dbound2_rec);;
+cvt (cv_nest_lets CHECK_2DBOUND2_REC_RP);;
+let check_2dbound2_t = define
+ `check_2dbound2_t nhub rf p1 i (b:int) =
+    let p2 = rot_part i p1 in
+    let sd1t = sort_drules p1 (SND rf) in
+    let sd1s = sort_drules p1 (FST rf) in
+    let sd2t = sort_drules p2 (SND rf) in
+    let sd2s = sort_drules p2 (FST rf) in
+    let v = &(FST sd1s + FST sd2s) - &(FST sd1t + FST sd2t) + b in
+    if v < &0 then F
+    else check_2dbound2_rec_rp nhub p1 p2 (SND sd1t) (SND sd1s) [] (SND sd2t)
+           (SND sd2s) [] i (int_pos v) (LENGTH (SND sd1t) + (LENGTH (SND sd2t) + 3))`;;
+let CHECK_2DBOUND2_T = prove
+ (`!nhub rf p1 i b. check_2dbound2 nhub (redpart the_quiz_tree) rf p1 i b =
+                    check_2dbound2_t nhub rf p1 i b`,
+  CV_INT_POS_TAC [check_2dbound2; check_2dbound2_t; CHECK_2DBOUND2_REC_RP_DEF]);;
+cvt check_2dbound2_t;;
+
+let HUBCAP_FIT_RP_DEF = fst (cv_specialize_redp "hubcap_fit" hubcap_fit);;
+cvt (PURE_REWRITE_RULE[CHECK_DBOUND2_T; CHECK_2DBOUND2_T]
+       (cv_rp_clauses [HUBCAP_FIT_RP_DEF] hubcap_fit));;

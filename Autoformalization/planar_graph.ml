@@ -120,8 +120,7 @@ let FINITE_SIMPLE_GRAPH_UNION = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[finite_simple_graph] THEN
   INTRO_TAC
-   "(finite_vertices1 finite_edges1 edge1) \
-    (finite_vertices2 finite_edges2 edge2)" THEN
+   "(finite_vertices1 finite_edges1 edge1) (finite_vertices2 finite_edges2 edge2)" THEN
   REPEAT CONJ_TAC THENL
    [ASM_REWRITE_TAC[FINITE_UNION];
     ASM_REWRITE_TAC[FINITE_UNION];
@@ -1405,8 +1404,7 @@ let PLANAR_GRAPH_INSERT_COFACIAL_EDGE = prove
         ==> planar_graph V ({u,v} INSERT E)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding u_vertex v_vertex distinct fresh component \
-    u_frontier v_frontier" THEN
+   "graph embedding u_vertex v_vertex distinct fresh component u_frontier v_frontier" THEN
   SUBGOAL_THEN `INJ (p:A->real^2) V UNIV`
   (LABEL_TAC "injective") THENL
    [USE_THEN "embedding" MP_TAC THEN
@@ -1534,8 +1532,7 @@ let MAXIMAL_PLANAR_GRAPH_COFACIAL_ADJACENT = prove
         ==> {u,v} IN E`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding maximal u_vertex v_vertex distinct component \
-    u_frontier v_frontier" THEN
+   "graph embedding maximal u_vertex v_vertex distinct component u_frontier v_frontier" THEN
   ASM_CASES_TAC `({u,v}:A->bool) IN E` THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN
    `planar_graph (V:A->bool) ({u,v} INSERT E)`
@@ -1810,10 +1807,7 @@ let CONNECTED_CROSSCUT_SPLIT_AWAY_FROM_FRONTIER = prove
         ==> k SUBSET inside(path_image c2 UNION path_image c)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "distinct c1_simple c1_start c1_finish \
-    c2_simple c2_start c2_finish c_simple c_start c_finish \
-    c1_c2 c1_c c2_c crosses k_connected k_inside k_disjoint \
-    x_frontier x_on_c2 x_not_c1 x_not_c" THEN
+   "distinct c1_simple c1_start c1_finish c2_simple c2_start c2_finish c_simple c_start c_finish c1_c2 c1_c c2_c crosses k_connected k_inside k_disjoint x_frontier x_on_c2 x_not_c1 x_not_c" THEN
   MP_TAC(ISPECL
    [`c1:real^1->real^2`; `c2:real^1->real^2`;
     `c:real^1->real^2`; `a:real^2`; `b:real^2`;
@@ -1881,14 +1875,7 @@ let CONNECTED_K4_BRANCHES_NOT_COFACIAL = prove
         ==> F`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "pa_pb px_py ab_arc ab_start ab_finish \
-    axb_arc axb_start axb_finish ayb_arc ayb_start ayb_finish \
-    xy_arc xy_start xy_finish xay_arc xay_start xay_finish \
-    xby_arc xby_start xby_finish \
-    ab_axb axb_ayb ayb_ab xy_xay xay_xby xby_xy ab_xy \
-    quadrilateral px_axb py_ayb pa_xay pb_xby px_inside \
-    k_connected k_nonempty k_disjoint \
-    pa_frontier pb_frontier px_frontier py_frontier" THEN
+   "pa_pb px_py ab_arc ab_start ab_finish axb_arc axb_start axb_finish ayb_arc ayb_start ayb_finish xy_arc xy_start xy_finish xay_arc xay_start xay_finish xby_arc xby_start xby_finish ab_axb axb_ayb ayb_ab xy_xay xay_xby xby_xy ab_xy quadrilateral px_axb py_ayb pa_xay pb_xby px_inside k_connected k_nonempty k_disjoint pa_frontier pb_frontier px_frontier py_frontier" THEN
   SUBGOAL_THEN
    `closed(path_image(gayb:real^1->real^2) UNION path_image gab)`
   (LABEL_TAC "outer_closed") THENL
@@ -2265,9 +2252,7 @@ let PLANE_GRAPH_EMBEDDING_K4_BRANCH_INTERSECTIONS = prove
         c {a,b} INTER c {x,y} = {}`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "embedding ab_distinct ax_distinct ay_distinct bx_distinct \
-    by_distinct xy_distinct ab_edge ax_edge xb_edge ay_edge \
-    yb_edge xy_edge" THEN
+   "embedding ab_distinct ax_distinct ay_distinct bx_distinct by_distinct xy_distinct ab_edge ax_edge xb_edge ay_edge yb_edge xy_edge" THEN
   let edge_tac th =
     MATCH_MP_TAC(ISPECL
      [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
@@ -2374,9 +2359,7 @@ let PLANE_GRAPH_EMBEDDING_K4_HAS_INTERIOR_VERTEX = prove
         p b IN inside(c {x,y} UNION (c {x,a} UNION c {a,y}))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding ab_distinct ax_distinct ay_distinct bx_distinct \
-    by_distinct xy_distinct ab_edge ax_edge xb_edge ay_edge \
-    yb_edge xy_edge" THEN
+   "graph embedding ab_distinct ax_distinct ay_distinct bx_distinct by_distinct xy_distinct ab_edge ax_edge xb_edge ay_edge yb_edge xy_edge" THEN
   SUBGOAL_THEN
    `(a:A) IN V /\ (b:A) IN V /\ (x:A) IN V /\ (y:A) IN V`
   STRIP_ASSUME_TAC THENL
@@ -2780,10 +2763,7 @@ let PLANE_GRAPH_EMBEDDING_K4_INTERIOR_VERTEX_NOT_COFACIAL = prove
         ==> F`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding ab_distinct ax_distinct ay_distinct bx_distinct \
-    by_distinct xy_distinct ab_edge ax_edge xb_edge ay_edge \
-    yb_edge xy_edge x_inside component \
-    a_frontier b_frontier x_frontier y_frontier" THEN
+   "graph embedding ab_distinct ax_distinct ay_distinct bx_distinct by_distinct xy_distinct ab_edge ax_edge xb_edge ay_edge yb_edge xy_edge x_inside component a_frontier b_frontier x_frontier y_frontier" THEN
   SUBGOAL_THEN
    `(a:A) IN V /\ (b:A) IN V /\ (x:A) IN V /\ (y:A) IN V`
   STRIP_ASSUME_TAC THENL
@@ -3023,10 +3003,7 @@ let PLANE_GRAPH_EMBEDDING_K4_NOT_COFACIAL = prove
         ==> F`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding ab_distinct ax_distinct ay_distinct bx_distinct \
-    by_distinct xy_distinct ab_edge ax_edge xb_edge ay_edge \
-    yb_edge xy_edge component \
-    a_frontier b_frontier x_frontier y_frontier" THEN
+   "graph embedding ab_distinct ax_distinct ay_distinct bx_distinct by_distinct xy_distinct ab_edge ax_edge xb_edge ay_edge yb_edge xy_edge component a_frontier b_frontier x_frontier y_frontier" THEN
   SUBGOAL_THEN `({y,x}:A->bool) IN E`
   (LABEL_TAC "yx_edge") THENL
    [USE_THEN "xy_edge"
@@ -3131,8 +3108,7 @@ let MAXIMAL_PLANAR_GRAPH_FACE_VERTICES_CARD_LE_3 = prove
   REMOVE_THEN "t_size" MP_TAC THEN
   REWRITE_TAC[HAS_SIZE_CONV `t:A->bool HAS_SIZE 4`] THEN
   INTRO_TAC
-   "@a b x y. xy_distinct bx_distinct by_distinct \
-    ab_distinct ax_distinct ay_distinct t_eq" THEN
+   "@a b x y. xy_distinct bx_distinct by_distinct ab_distinct ax_distinct ay_distinct t_eq" THEN
   USE_THEN "t_eq" SUBST_ALL_TAC THEN
   SUBGOAL_THEN
    `(a:A) IN plane_graph_face_vertices V E p c k /\
@@ -3596,8 +3572,7 @@ let ARC_MIDDLE_OUTSIDE_DISJOINT_CBALLS = prove
    [ASM_SIMP_TAC[ARC_REVERSEPATH; PATHSTART_REVERSEPATH;
                  PATHFINISH_REVERSEPATH];
     INTRO_TAC
-     "@t. tail_parameter tail_nonzero tail_arc tail_boundary \
-          tail_outside tail_subset"] THEN
+     "@t. tail_parameter tail_nonzero tail_arc tail_boundary tail_outside tail_subset"] THEN
   ABBREV_TAC
    `q:real^1->real^N =
       reversepath(subpath (vec 0) t (reversepath g))` THEN
@@ -3669,8 +3644,7 @@ let ARC_MIDDLE_OUTSIDE_DISJOINT_CBALLS = prove
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[];
     INTRO_TAC
-     "@u. middle_parameter middle_nonzero middle_arc head_boundary \
-          head_outside middle_subset"] THEN
+     "@u. middle_parameter middle_nonzero middle_arc head_boundary head_outside middle_subset"] THEN
   EXISTS_TAC `subpath (vec 0) u (q:real^1->real^N)` THEN
   REPEAT CONJ_TAC THENL
    [USE_THEN "middle_arc" ACCEPT_TAC;
@@ -3952,8 +3926,7 @@ let ARC_RADIALIZE_BETWEEN_DISJOINT_CBALLS = prove
         ==> arc((linepath(a,pathstart h) ++ h) ++
                 linepath(pathfinish h,b))`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "arc rpositive spositive disjoint start finish \
-             tail_outside head_outside" THEN
+  INTRO_TAC "arc rpositive spositive disjoint start finish tail_outside head_outside" THEN
   ABBREV_TAC
    `q:real^1->real^N = linepath(a,pathstart h) ++ h` THEN
   SUBGOAL_THEN `arc(q:real^1->real^N)` (LABEL_TAC "q_arc") THENL
@@ -4050,8 +4023,7 @@ let POLYGONAL_ARC_RADIALIZE_BETWEEN_DISJOINT_CBALLS = prove
              ((linepath(a,pathstart h) ++ h) ++
               linepath(pathfinish h,b))`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "polygonal rpositive spositive disjoint start finish \
-             tail_outside head_outside" THEN
+  INTRO_TAC "polygonal rpositive spositive disjoint start finish tail_outside head_outside" THEN
   SUBGOAL_THEN `arc(h:real^1->real^N)` (LABEL_TAC "arc") THENL
    [MATCH_MP_TAC POLYGONAL_ARC_IMP_ARC THEN
     USE_THEN "polygonal" ACCEPT_TAC;
@@ -4247,8 +4219,7 @@ let EMBEDDED_DART_MIDDLE_OUTSIDE_DISJOINT_CBALLS = prove
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[];
     INTRO_TAC
-     "@h. middle_arc middle_subset middle_start middle_finish \
-          tail_outside head_outside"] THEN
+     "@h. middle_arc middle_subset middle_start middle_finish tail_outside head_outside"] THEN
   EXISTS_TAC `h:real^1->real^2` THEN
   ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC SUBSET_TRANS THEN
@@ -4293,8 +4264,7 @@ let EMBEDDED_DART_RADIALIZED_ARC = prove
    EMBEDDED_DART_MIDDLE_OUTSIDE_DISJOINT_CBALLS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "@h. middle_arc middle_subset middle_start middle_finish \
-        tail_outside head_outside" THEN
+   "@h. middle_arc middle_subset middle_start middle_finish tail_outside head_outside" THEN
   EXISTS_TAC `h:real^1->real^2` THEN
   ASM_REWRITE_TAC[] THEN
   REPEAT CONJ_TAC THENL
@@ -4438,8 +4408,7 @@ let EMBEDDED_DART_MIDDLE_AVOIDS_VERTICES = prove
         ((:real^2) DIFF cball(p v,s))
         ==> DISJOINT (path_image h) (IMAGE p V)`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "graph embedding dart rpositive spositive middle_subset \
-             middle_start middle_finish tail_outside head_outside" THEN
+  INTRO_TAC "graph embedding dart rpositive spositive middle_subset middle_start middle_finish tail_outside head_outside" THEN
   SUBGOAL_THEN
    `(u:A) IN V /\ (v:A) IN V /\ ~(u = v)`
   STRIP_ASSUME_TAC THENL
@@ -4506,8 +4475,7 @@ let EMBEDDED_MIDDLE_ARCS_DISJOINT = prove
         DISJOINT (path_image h') (IMAGE p V)
         ==> DISJOINT (path_image h) (path_image h')`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "graph embedding edge edge' distinct h_subset h'_subset \
-             h_vertices h'_vertices" THEN
+  INTRO_TAC "graph embedding edge edge' distinct h_subset h'_subset h_vertices h'_vertices" THEN
   USE_THEN "embedding" MP_TAC THEN
   REWRITE_TAC[plane_graph_embedding] THEN
   INTRO_TAC "_ _ _ edge_intersections" THEN
@@ -4978,8 +4946,7 @@ let PLANE_GRAPH_EMBEDDING_DISJOINT_RADIALIZED_EDGES = prove
       MP_TAC(MATCH_MP (SPECL [`u:A`; `v:A`] th)
        (ASSUME `(u:A,v) IN graph_darts E`))) THEN
     INTRO_TAC
-     "@h. middle_arc middle_subset middle_start middle_finish \
-          tail_outside head_outside radial_arc radial_start radial_finish" THEN
+     "@h. middle_arc middle_subset middle_start middle_finish tail_outside head_outside radial_arc radial_start radial_finish" THEN
     SUBGOAL_THEN `DISJOINT (path_image h) (IMAGE (p:A->real^2) V)`
     (LABEL_TAC "avoids_vertices") THENL
      [MATCH_MP_TAC(ISPECL
@@ -5103,8 +5070,7 @@ let PLANE_GRAPH_EMBEDDING_DISJOINT_POLYGONAL_MIDDLES = prove
     USE_THEN "radialized" (fun th ->
       MP_TAC(MATCH_MP (SPEC `e:A->bool` th)
        (ASSUME `(e:A->bool) IN E`))) THEN
-    INTRO_TAC "a_vertex b_vertex distinct pair _ _ start finish \
-               _ _ _ _ _ _" THEN
+    INTRO_TAC "a_vertex b_vertex distinct pair _ _ start finish _ _ _ _ _ _" THEN
     USE_THEN "polygonalized" (fun th ->
       MP_TAC(MATCH_MP (SPEC `e:A->bool` th)
        (ASSUME `(e:A->bool) IN E`))) THEN
@@ -5222,8 +5188,7 @@ let PLANE_GRAPH_EMBEDDING_DISJOINT_TRIMMED_POLYGONAL_MIDDLES = prove
     ANTS_TAC THENL
      [ASM_REWRITE_TAC[];
       INTRO_TAC
-       "@h. h_polygonal h_subset h_start h_finish \
-            tail_outside head_outside"] THEN
+       "@h. h_polygonal h_subset h_start h_finish tail_outside head_outside"] THEN
     EXISTS_TAC `h:real^1->real^2` THEN ASM_REWRITE_TAC[] THEN
     USE_THEN "h_subset" MP_TAC THEN USE_THEN "avoids" MP_TAC THEN
     REWRITE_TAC[DISJOINT] THEN SET_TAC[];
@@ -5350,8 +5315,7 @@ let RADIAL_SEGMENTS_AT_GRAPH_VERTICES_INTER = prove
         ==> segment[p v,x] INTER segment[p w,y] =
             IMAGE p ({v} INTER {w})`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "v_vertex w_vertex v_nonnegative w_nonnegative \
-             x_sphere y_sphere same different" THEN
+  INTRO_TAC "v_vertex w_vertex v_nonnegative w_nonnegative x_sphere y_sphere same different" THEN
   ASM_CASES_TAC `(v:A) = w` THENL
    [ASM_REWRITE_TAC[INTER_IDEMPOT; IMAGE_CLAUSES] THEN
     MATCH_MP_TAC RADIAL_SEGMENTS_INTER THEN ASM_MESON_TAC[];
@@ -5563,9 +5527,7 @@ let RADIAL_SEGMENT_DISJOINT_EDGE_MIDDLE = prove
         (v = b e ==> ~(x = pathfinish(k e)))
         ==> DISJOINT (segment[p v,x]) (path_image(k e))`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "v_vertex nonnegative x_sphere pair start finish \
-             tail_outside head_outside avoids start_distinct \
-             finish_distinct" THEN
+  INTRO_TAC "v_vertex nonnegative x_sphere pair start finish tail_outside head_outside avoids start_distinct finish_distinct" THEN
   ASM_CASES_TAC
    `(v:A) = (a:(A->bool)->A) (e:A->bool)` THENL
    [MATCH_MP_TAC
@@ -5661,14 +5623,12 @@ let RADIALIZED_EDGES_INTER = prove
     MP_TAC(MATCH_MP (SPEC `e:A->bool` th)
      (ASSUME `(e:A->bool) IN E`))) THEN
   INTRO_TAC
-   "e_a_vertex e_b_vertex e_pair e_start e_finish \
-    e_tail_outside e_head_outside e_avoids" THEN
+   "e_a_vertex e_b_vertex e_pair e_start e_finish e_tail_outside e_head_outside e_avoids" THEN
   USE_THEN "edge_data" (fun th ->
     MP_TAC(MATCH_MP (SPEC `e':A->bool` th)
      (ASSUME `(e':A->bool) IN E`))) THEN
   INTRO_TAC
-   "e'_a_vertex e'_b_vertex e'_pair e'_start e'_finish \
-    e'_tail_outside e'_head_outside e'_avoids" THEN
+   "e'_a_vertex e'_b_vertex e'_pair e'_start e'_finish e'_tail_outside e'_head_outside e'_avoids" THEN
   SUBGOAL_THEN
    `DISJOINT
      (path_image((k:(A->bool)->real^1->real^2) (e:A->bool)))
@@ -6124,8 +6084,7 @@ let PLANE_GRAPH_EMBEDDING_IMP_POLYGONAL_EMBEDDING = prove
       MP_TAC(MATCH_MP (SPEC `d:A->bool` th)
        (ASSUME `(d:A->bool) IN E`))) THEN
     INTRO_TAC
-     "a_vertex b_vertex distinct pair polygonal start finish \
-      tail_outside head_outside avoids" THEN
+     "a_vertex b_vertex distinct pair polygonal start finish tail_outside head_outside avoids" THEN
     REPEAT CONJ_TAC THENL
      [USE_THEN "a_vertex" ACCEPT_TAC;
       USE_THEN "b_vertex" ACCEPT_TAC;
@@ -6147,8 +6106,7 @@ let PLANE_GRAPH_EMBEDDING_IMP_POLYGONAL_EMBEDDING = prove
       MP_TAC(MATCH_MP (SPEC `d:A->bool` th)
        (ASSUME `(d:A->bool) IN E`))) THEN
     INTRO_TAC
-     "a_vertex b_vertex distinct pair polygonal start finish \
-      tail_outside head_outside avoids" THEN
+     "a_vertex b_vertex distinct pair polygonal start finish tail_outside head_outside avoids" THEN
     MATCH_MP_TAC
      (ISPECL
        [`p:A->real^2`; `r:A->real`; `a:(A->bool)->A`;
@@ -6193,8 +6151,7 @@ let PLANE_GRAPH_EMBEDDING_IMP_POLYGONAL_EMBEDDING = prove
     USE_THEN "edge_geometry" (fun th ->
       MP_TAC(MATCH_MP (SPEC `d:A->bool` th)
        (ASSUME `(d:A->bool) IN E`))) THEN
-    INTRO_TAC "a_vertex b_vertex pair start finish \
-               tail_outside head_outside avoids" THEN
+    INTRO_TAC "a_vertex b_vertex pair start finish tail_outside head_outside avoids" THEN
     REWRITE_TAC[RADIALIZED_EDGE_ENDPOINTS] THEN
     USE_THEN "pair" (fun th ->
       ACCEPT_TAC
@@ -6216,8 +6173,7 @@ let PLANE_GRAPH_EMBEDDING_IMP_POLYGONAL_EMBEDDING = prove
     USE_THEN "edge_geometry" (fun th ->
       MP_TAC(MATCH_MP (SPEC `d:A->bool` th)
        (ASSUME `(d:A->bool) IN E`))) THEN
-    INTRO_TAC "a_vertex b_vertex pair start finish \
-               tail_outside head_outside avoids" THEN
+    INTRO_TAC "a_vertex b_vertex pair start finish tail_outside head_outside avoids" THEN
     MATCH_MP_TAC
      (ISPECL
        [`V:A->bool`; `p:A->real^2`; `r:A->real`;
@@ -6713,8 +6669,7 @@ let STRAIGHT_LINE_EMBEDDING_INSERT_VERTEX_STAR = prove
              (IMAGE (\u:A. {v,u}) N UNION E) p'`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding fresh neighbors agrees new_vertex old_edges \
-    new_vertices new_old new_new" THEN
+   "graph embedding fresh neighbors agrees new_vertex old_edges new_vertices new_old new_new" THEN
   USE_THEN "embedding" MP_TAC THEN
   REWRITE_TAC[straight_line_embedding] THEN
   INTRO_TAC "old_injective old_vertices old_intersections" THEN
@@ -7991,8 +7946,7 @@ let STRAIGHT_LINE_EMBEDDINGS_ALONG_EDGE_CROSS_INJ = prove
         x IN V1 /\ y IN V2 /\ p x = p y
         ==> x = y`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "embedding1 embedding2 chord_subset1 chord_subset2 \
-             chord1 chord2 hulls x_vertex y_vertex equal" THEN
+  INTRO_TAC "embedding1 embedding2 chord_subset1 chord_subset2 chord1 chord2 hulls x_vertex y_vertex equal" THEN
   MP_TAC(ASSUME
    `straight_line_embedding (V1:A->bool) E1 (p:A->real^2)`) THEN
   REWRITE_TAC[straight_line_embedding] THEN
@@ -8067,8 +8021,7 @@ let INJ_UNION_STRAIGHT_LINE_EMBEDDINGS_ALONG_EDGE = prove
         segment[p u,p v]
         ==> INJ (p:A->real^2) (V1 UNION V2) UNIV`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "embedding1 embedding2 chord_subset1 chord_subset2 \
-             chord1 chord2 hulls" THEN
+  INTRO_TAC "embedding1 embedding2 chord_subset1 chord_subset2 chord1 chord2 hulls" THEN
   MP_TAC(ASSUME
    `straight_line_embedding (V1:A->bool) E1 (p:A->real^2)`) THEN
   REWRITE_TAC[straight_line_embedding] THEN
@@ -8215,8 +8168,7 @@ let STRAIGHT_LINE_EMBEDDINGS_ALONG_EDGE_INTER_EDGES = prove
             IMAGE p (e INTER d)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "embedding1 embedding2 injective chord_subset1 chord_subset2 \
-    chord1 chord2 edge1 edge2 distinct edge_subset1 edge_subset2 hulls" THEN
+   "embedding1 embedding2 injective chord_subset1 chord_subset2 chord1 chord2 edge1 edge2 distinct edge_subset1 edge_subset2 hulls" THEN
   MP_TAC(ASSUME
    `straight_line_embedding (V1:A->bool) E1 (p:A->real^2)`) THEN
   REWRITE_TAC[straight_line_embedding] THEN
@@ -8467,8 +8419,7 @@ let STRAIGHT_LINE_EMBEDDING_UNION_STRICTLY_CONVEX_CYCLE_SPLIT = prove
              (p:A->real^2)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph1 graph2 embedding1 embedding2 chord1 chord2 convex bound \
-    first_endpoint last_endpoint left_hull right_hull" THEN
+   "graph1 graph2 embedding1 embedding2 chord1 chord2 convex bound first_endpoint last_endpoint left_hull right_hull" THEN
   MATCH_MP_TAC(ISPECL
    [`V1:A->bool`; `E1:(A->bool)->bool`;
     `V2:A->bool`; `E2:(A->bool)->bool`; `p:A->real^2`;
@@ -10573,8 +10524,7 @@ let STRAIGHT_LINE_EMBEDDING_INSERT_VERTEX_BEZIER_CHAIN = prove
              (IMAGE (\u:A. {v,u}) N UNION E) p'`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding fresh neighbors agrees new_point convex nlarge \
-    hull neighbor_points" THEN
+   "graph embedding fresh neighbors agrees new_point convex nlarge hull neighbor_points" THEN
   USE_THEN "embedding"
    (MP_TAC o REWRITE_RULE[straight_line_embedding]) THEN
   INTRO_TAC "injective edge_vertices edge_intersections" THEN
@@ -10994,8 +10944,7 @@ let RECURSIVE_TRIANGULATED_DISK_INVARIANTS = prove
      [`V:A->bool`; `E:(A->bool)->bool`; `q:num->A`;
       `n:num`; `k:num`; `w:num->A`] THEN
     INTRO_TAC
-     "(graph old_large old_injective old_boundary) nlarge injective \
-      fresh neighbors first last" THEN
+     "(graph old_large old_injective old_boundary) nlarge injective fresh neighbors first last" THEN
     REPEAT CONJ_TAC THENL
      [MATCH_MP_TAC FINITE_SIMPLE_GRAPH_INSERT_VERTEX_STAR THEN
       ASM_REWRITE_TAC[];
@@ -11019,9 +10968,7 @@ let RECURSIVE_TRIANGULATED_DISK_INVARIANTS = prove
       `V2:A->bool`; `E2:(A->bool)->bool`;
       `q:num->A`; `n:num`; `j:num`] THEN
     INTRO_TAC
-     "(graph1 left_large left_injective left_boundary) \
-      (graph2 right_large right_injective right_boundary) \
-      jpositive bound injective overlap chord1 chord2" THEN
+     "(graph1 left_large left_injective left_boundary) (graph2 right_large right_injective right_boundary) jpositive bound injective overlap chord1 chord2" THEN
     REPEAT CONJ_TAC THENL
      [MATCH_MP_TAC FINITE_SIMPLE_GRAPH_UNION THEN ASM_REWRITE_TAC[];
       ASM_ARITH_TAC;
@@ -11267,8 +11214,7 @@ let RECURSIVE_TRIANGULATED_DISK_EMBEDDING_STRONG = prove
      [`V:A->bool`; `E:(A->bool)->bool`; `q:num->A`;
       `n:num`; `k:num`; `w:num->A`] THEN
     INTRO_TAC
-     "(graph old_vertices induction) nlarge injective fresh neighbors \
-      first last" THEN
+     "(graph old_vertices induction) nlarge injective fresh neighbors first last" THEN
     REPEAT CONJ_TAC THENL
      [MATCH_MP_TAC FINITE_SIMPLE_GRAPH_INSERT_VERTEX_STAR THEN
       ASM_REWRITE_TAC[];
@@ -11371,9 +11317,7 @@ let RECURSIVE_TRIANGULATED_DISK_EMBEDDING_STRONG = prove
       `V2:A->bool`; `E2:(A->bool)->bool`;
       `q:num->A`; `n:num`; `j:num`] THEN
     INTRO_TAC
-     "(graph1 left_vertices induction1) \
-      (graph2 right_vertices induction2) \
-      jpositive bound injective overlap chord1 chord2" THEN
+     "(graph1 left_vertices induction1) (graph2 right_vertices induction2) jpositive bound injective overlap chord1 chord2" THEN
     SUBGOAL_THEN
      `cyclic_vertices (cyclic_split_left q n j) (j + 2) UNION
       cyclic_vertices (cyclic_split_right q j) (n - j) =
@@ -14467,8 +14411,7 @@ let PLANE_TRIANGULATED_DISK_INVARIANTS = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[plane_triangulated_disk; simple_graph_cycle] THEN
   INTRO_TAC
-   "graph embedding large (_ injective boundary_edges) component \
-    boundary _" THEN
+   "graph embedding large (_ injective boundary_edges) component boundary _" THEN
   REPEAT CONJ_TAC THENL
    [USE_THEN "graph" ACCEPT_TAC;
     USE_THEN "embedding" ACCEPT_TAC;
@@ -15075,8 +15018,7 @@ let PLANE_GRAPH_DELETE_VERTEX_INCIDENT_COMPONENTS_MERGE = prove
         ==> l1 = l2`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "embedding vertex k1_component v_face1 k2_component v_face2 \
-    l1_component k1_subset l2_component k2_subset" THEN
+   "embedding vertex k1_component v_face1 k2_component v_face2 l1_component k1_subset l2_component k2_subset" THEN
   SUBGOAL_THEN `(p:A->real^2) v INSERT k1 SUBSET l1`
   (LABEL_TAC "adjoined1") THENL
    [MATCH_MP_TAC(ISPECL
@@ -15130,8 +15072,7 @@ let PLANE_GRAPH_DELETE_VERTEX_INCIDENT_COMPONENT_SUBSET = prove
         ==> k SUBSET l0`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "embedding vertex k0_component v_k0 l0_component k0_subset \
-    k_component v_k" THEN
+   "embedding vertex k0_component v_k0 l0_component k0_subset k_component v_k" THEN
   SUBGOAL_THEN
    `plane_graph_carrier ((V:A->bool) DELETE (v:A))
       (induced_subgraph_edges (E:(A->bool)->bool)
@@ -16264,8 +16205,7 @@ let PLANE_GRAPH_DELETE_VERTEX_OTHER_COMPONENT_PERSISTS = prove
              ((:real^2) DIFF plane_graph_carrier V E p c)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding v_vertex newouter_component v_newouter \
-    component distinct" THEN
+   "graph embedding v_vertex newouter_component v_newouter component distinct" THEN
   ABBREV_TAC
    `oldcarrier = plane_graph_carrier (V:A->bool) E p c` THEN
   ABBREV_TAC
@@ -16354,8 +16294,7 @@ let PLANE_TRIANGULATED_DISK_DELETE_VERTEX_OTHER_FACE_TRIANGULAR = prove
                 (induced_subgraph_edges E (V DELETE v)) r 3`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk v_boundary newouter_component outer_subset v_newouter \
-    component distinct" THEN
+   "disk v_boundary newouter_component outer_subset v_newouter component distinct" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -16498,8 +16437,7 @@ let PLANE_TRIANGULATED_DISK_DELETE_VERTEX = prove
               p c r m newouter`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk v_boundary newouter_component outer_subset v_newouter \
-    new_boundary new_cycle" THEN
+   "disk v_boundary newouter_component outer_subset v_newouter new_boundary new_cycle" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -17181,8 +17119,7 @@ let PLANE_TRIANGULATED_DISK_DELETE_LAST_WITH_NEIGHBOR_PATH = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `simple_graph_cycle (E:(A->bool)->bool) q n`
   (LABEL_TAC "cycle") THENL
@@ -18155,9 +18092,7 @@ let PLANE_TRIANGULATED_DISK_OUTER_EQ_JORDAN_SIDE = prove
   MP_TAC(ISPEC `j:real^1->real^2` JORDAN_INSIDE_OUTSIDE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "inside_nonempty inside_open inside_connected outside_nonempty \
-    outside_open outside_connected inside_bounded outside_unbounded \
-    sides_disjoint sides_union inside_frontier outside_frontier" THEN
+   "inside_nonempty inside_open inside_connected outside_nonempty outside_open outside_connected inside_bounded outside_unbounded sides_disjoint sides_union inside_frontier outside_frontier" THEN
   EXISTS_TAC `j:real^1->real^2` THEN ASM_REWRITE_TAC[] THEN
   USE_THEN "outer_side" MP_TAC THEN
   USE_THEN "image" (fun th -> REWRITE_TAC[th]) THEN
@@ -18285,14 +18220,11 @@ let OPEN_JORDAN_COMPLEMENT_COMPONENT_EQ_SIDE = prove
              k = outside(path_image j))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "simple closed k_connected k_nonempty k_open k_subset \
-    frontier_subset" THEN
+   "simple closed k_connected k_nonempty k_open k_subset frontier_subset" THEN
   MP_TAC(ISPEC `j:real^1->real^2` JORDAN_INSIDE_OUTSIDE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "inside_nonempty inside_open inside_connected outside_nonempty \
-    outside_open outside_connected inside_bounded outside_unbounded \
-    sides_disjoint sides_union inside_frontier outside_frontier" THEN
+   "inside_nonempty inside_open inside_connected outside_nonempty outside_open outside_connected inside_bounded outside_unbounded sides_disjoint sides_union inside_frontier outside_frontier" THEN
   SUBGOAL_THEN
    `(k:real^2->bool) = inside(path_image j) \/
     k = outside(path_image j)`
@@ -18446,9 +18378,7 @@ let CLOSED_EMPTY_INTERIOR_JORDAN_SIDE_DENSE = prove
   MP_TAC(ISPEC `j:real^1->real^2` JORDAN_INSIDE_OUTSIDE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "inside_nonempty inside_open inside_connected outside_nonempty \
-    outside_open outside_connected inside_bounded outside_unbounded \
-    sides_disjoint sides_union inside_frontier outside_frontier" THEN
+   "inside_nonempty inside_open inside_connected outside_nonempty outside_open outside_connected inside_bounded outside_unbounded sides_disjoint sides_union inside_frontier outside_frontier" THEN
   SUBGOAL_THEN
    `open(s:real^2->bool) /\ frontier s = path_image j`
   (CONJUNCTS_THEN2
@@ -18828,8 +18758,7 @@ let PLANE_TRIANGULATED_DISK_TRIANGULAR_FACE_OPPOSITE_EDGE = prove
    PLANE_GRAPH_EMBEDDING_TRIANGULAR_FACE_OPPOSITE_EDGE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "@j l. simple loop image frontier l_component distinct \
-    edge_face edge_frontier opposite" THEN
+   "@j l. simple loop image frontier l_component distinct edge_face edge_frontier opposite" THEN
   EXISTS_TAC `l:real^2->bool` THEN
   REPEAT CONJ_TAC THENL
    [USE_THEN "l_component" ACCEPT_TAC;
@@ -18866,8 +18795,7 @@ let UNIT_HORIZONTAL_SEGMENT_AT_MOST_TWO_INCIDENT_COMPONENTS = prove
         ==> k1 = k2 \/ k1 = k3 \/ k2 = k3`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "closed edge_inter k1_component k2_component k3_component \
-    z_segment z_frontier1 z_frontier2 z_frontier3" THEN
+   "closed edge_inter k1_component k2_component k3_component z_segment z_frontier1 z_frontier2 z_frontier3" THEN
   SUBGOAL_THEN
    `(z:real^2)$2 = &0 /\ &0 < z$1 /\ z$1 < &1`
   STRIP_ASSUME_TAC THENL
@@ -19144,8 +19072,7 @@ let ARC_AT_MOST_TWO_INCIDENT_COMPONENTS = prove
         ==> k1 = k2 \/ k1 = k3 \/ k2 = k3`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "arc closed edge_inter k1_component k2_component k3_component \
-    x_interior x_frontier1 x_frontier2 x_frontier3" THEN
+   "arc closed edge_inter k1_component k2_component k3_component x_interior x_frontier1 x_frontier2 x_frontier3" THEN
   SUBGOAL_THEN `arc(linepath(vec 0:real^2,basis 1))`
   (LABEL_TAC "line_arc") THENL
    [SIMP_TAC[ARC_LINEPATH_EQ; BASIS_NONZERO; DIMINDEX_GE_1; LE_REFL];
@@ -19400,8 +19327,7 @@ let PLANE_GRAPH_EMBEDDING_EDGE_AT_MOST_TWO_INCIDENT_COMPONENTS =
         ==> k1 = k2 \/ k1 = k3 \/ k2 = k3`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding edge k1_component k2_component k3_component \
-    x_interior x_frontier1 x_frontier2 x_frontier3" THEN
+   "graph embedding edge k1_component k2_component k3_component x_interior x_frontier1 x_frontier2 x_frontier3" THEN
   USE_THEN "embedding" MP_TAC THEN
   REWRITE_TAC[plane_graph_embedding] THEN
   INTRO_TAC "_ edge_paths _ _" THEN
@@ -19484,8 +19410,7 @@ let PLANE_GRAPH_EMBEDDING_EDGE_AT_MOST_TWO_INCIDENT_FACES = prove
         ==> k1 = k2 \/ k1 = k3 \/ k2 = k3`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding edge k1_component k2_component k3_component \
-    k1_frontier k2_frontier k3_frontier" THEN
+   "graph embedding edge k1_component k2_component k3_component k1_frontier k2_frontier k3_frontier" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `e:A->bool`]
@@ -19525,8 +19450,7 @@ let PLANE_GRAPH_EMBEDDING_OTHER_INCIDENT_FACE_UNIQUE = prove
         ~(l2 = k)
         ==> l1 = l2`,
   REPEAT GEN_TAC THEN INTRO_TAC
-   "graph embedding edge k_component l1_component l2_component \
-    k_frontier l1_frontier l2_frontier l1_distinct l2_distinct" THEN
+   "graph embedding edge k_component l1_component l2_component k_frontier l1_frontier l2_frontier l1_distinct l2_distinct" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `e:A->bool`;
@@ -20017,8 +19941,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_PATCH_INTERSECTION_EDGE =
               c e SUBSET frontier l`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk v_boundary newouter_component v_newouter \
-    k_component l_component distinct x_inter" THEN
+   "disk v_boundary newouter_component v_newouter k_component l_component distinct x_inter" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -20125,8 +20048,7 @@ let PLANE_TRIANGULATED_DISK_DELETE_VERTEX_INCIDENT_FACE_SUBSET =
         ==> k SUBSET newouter DELETE (p:A->real^2) v`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk v_boundary newouter_component outer_subset \
-    k_component v_face" THEN
+   "disk v_boundary newouter_component outer_subset k_component v_face" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -20197,8 +20119,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACES_CROSS_PARTITION = prove
               c e SUBSET frontier l`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk v_boundary newouter_component outer_subset v_newouter \
-    g_subset g_nonempty rest_nonempty" THEN
+   "disk v_boundary newouter_component outer_subset v_newouter g_subset g_nonempty rest_nonempty" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -20613,8 +20534,7 @@ let PLANE_TRIANGULATED_DISK_OUTER_FRONTIER_EDGE_AT_LAST = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN `simple_graph_cycle (E:(A->bool)->bool) q n`
   (LABEL_TAC "cycle") THENL
    [REWRITE_TAC[simple_graph_cycle] THEN ASM_REWRITE_TAC[];
@@ -20685,8 +20605,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_ADJACENCY_DEGREE_2 =
         ==> l1 = l2 \/ l1 = l3 \/ l2 = l3`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk chordless k_face l1_face l2_face l3_face \
-    adjacent1 adjacent2 adjacent3" THEN
+   "disk chordless k_face l1_face l2_face l3_face adjacent1 adjacent2 adjacent3" THEN
   USE_THEN "disk" MP_TAC THEN
   REWRITE_TAC[plane_triangulated_disk] THEN
   INTRO_TAC
@@ -21071,8 +20990,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_ADJACENCY_CONNECTED =
               plane_graph_face_adjacent_at E c v k l`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk v_boundary newouter_component outer_subset v_newouter \
-    g_subset g_nonempty rest_nonempty" THEN
+   "disk v_boundary newouter_component outer_subset v_newouter g_subset g_nonempty rest_nonempty" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -21551,8 +21469,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_ADJACENCY_SPANNING_PATH =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   MATCH_MP_TAC(ISPECL
    [`plane_graph_incident_faces
       (V:A->bool) E p c (q(n - 1))`;
@@ -21749,8 +21666,7 @@ let FINITE_RELATION_PATH_ENDPOINTS_RELATED = prove
         ==> R (f(n - 1)) (f 0)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "large path coverage irreflexive symmetric degree_at_least_2 \
-    degree_at_most_2" THEN
+   "large path coverage irreflexive symmetric degree_at_least_2 degree_at_most_2" THEN
   USE_THEN "path" MP_TAC THEN
   REWRITE_TAC[finite_relation_path] THEN
   INTRO_TAC "vertices injective relation_chain" THEN
@@ -21982,8 +21898,7 @@ let PLANE_TRIANGULATED_DISK_INTERNAL_FACE_TWO_EDGE_ADJACENCIES =
   USE_THEN "disk" MP_TAC THEN
   REWRITE_TAC[plane_triangulated_disk] THEN
   INTRO_TAC
-   "graph embedding nlarge boundary_cycle outer_component boundary \
-    all_faces" THEN
+   "graph embedding nlarge boundary_cycle outer_component boundary all_faces" THEN
   USE_THEN "k_incident" MP_TAC THEN
   REWRITE_TAC[plane_graph_incident_faces; IN_ELIM_THM] THEN
   INTRO_TAC "k_component v_k" THEN
@@ -22110,8 +22025,7 @@ let TRIANGLE_INCIDENT_EDGE_CHOICE = prove
         ==> d = e1 \/ d = e2`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "cycle v_vertex e1_cycle e2_cycle d_cycle \
-    v_e1 v_e2 v_d e1_e2" THEN
+   "cycle v_vertex e1_cycle e2_cycle d_cycle v_e1 v_e2 v_d e1_e2" THEN
   USE_THEN "cycle" MP_TAC THEN
   REWRITE_TAC[simple_graph_cycle] THEN
   INTRO_TAC "_ injective _" THEN
@@ -22231,8 +22145,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_FRONTIER_EDGE_CHOICE =
         ==> d = e1 \/ d = e2`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk chordless k_incident e1_e2 e1_edge e2_edge d_edge \
-    v_e1 v_e2 v_d e1_k e2_k d_k" THEN
+   "disk chordless k_incident e1_e2 e1_edge e2_edge d_edge v_e1 v_e2 v_d e1_k e2_k d_k" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -22240,8 +22153,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_FRONTIER_EDGE_CHOICE =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   USE_THEN "k_incident" MP_TAC THEN
   REWRITE_TAC[plane_graph_incident_faces; IN_ELIM_THM] THEN
   INTRO_TAC "k_component v_k" THEN
@@ -22320,8 +22232,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_SHARED_TWO_EDGES_NEIGHBORS =
                   ==> m = k)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk chordless k_face l_face k_l e1_e2 e1_edge e2_edge \
-    v_e1 v_e2 e1_k e2_k e1_l e2_l" THEN
+   "disk chordless k_face l_face k_l e1_e2 e1_edge e2_edge v_e1 v_e2 e1_k e2_k e1_l e2_l" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -22329,8 +22240,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_SHARED_TWO_EDGES_NEIGHBORS =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   USE_THEN "k_face" MP_TAC THEN
   REWRITE_TAC[plane_graph_incident_faces; IN_ELIM_THM] THEN
   INTRO_TAC "k_component v_k" THEN
@@ -22449,9 +22359,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_SHARED_TWO_EDGES_EXHAUST =
             SUBSET {k,l}`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk chordless newouter_component outer_subset last_newouter \
-    k_face l_face k_l e1_e2 e1_edge e2_edge v_e1 v_e2 \
-    e1_k e2_k e1_l e2_l" THEN
+   "disk chordless newouter_component outer_subset last_newouter k_face l_face k_l e1_e2 e1_edge e2_edge v_e1 v_e2 e1_k e2_k e1_l e2_l" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -22600,8 +22508,7 @@ let PLANE_GRAPH_EMBEDDING_EDGE_INCIDENT_FACE_CHOICE = prove
         ==> m = k \/ m = l`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding edge k_component l_component m_component \
-    e_k e_l e_m k_l" THEN
+   "graph embedding edge k_component l_component m_component e_k e_l e_m k_l" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `e:A->bool`;
@@ -22906,8 +22813,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_CYCLE_EDGES_ENUMERATE =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `INJ (d:num->A->bool) (cyclic_indices m) (:(A->bool))`
   (LABEL_TAC "d_injective") THENL
@@ -23060,8 +22966,7 @@ let PLANE_TRIANGULATED_DISK_OUTER_EDGE_OPPOSITE_FACE_FRONTIER = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective cycle_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective cycle_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN `(e:A->bool) IN E` (LABEL_TAC "edge") THENL
    [USE_THEN "cycle_edges" (MATCH_MP_TAC o REWRITE_RULE[SUBSET]) THEN
     USE_THEN "cycle_edge" ACCEPT_TAC;
@@ -23096,9 +23001,7 @@ let PLANE_TRIANGULATED_DISK_OUTER_EDGE_OPPOSITE_FACE_FRONTIER = prove
   MP_TAC(ISPEC `j:real^1->real^2` JORDAN_INSIDE_OUTSIDE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "inside_nonempty inside_open inside_connected outside_nonempty \
-    outside_open outside_connected inside_bounded outside_unbounded \
-    sides_disjoint sides_union inside_frontier outside_frontier" THEN
+   "inside_nonempty inside_open inside_connected outside_nonempty outside_open outside_connected inside_bounded outside_unbounded sides_disjoint sides_union inside_frontier outside_frontier" THEN
   SUBGOAL_THEN
    `?s:real^2->bool.
       (s = inside(path_image j) \/ s = outside(path_image j)) /\
@@ -23206,8 +23109,7 @@ let PLANE_TRIANGULATED_DISK_OUTER_FACE_TWO_EDGE_ADJACENCIES_FRONTIER =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective cycle_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective cycle_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `{(q:num->A)(n - 1),q(n - 2)} IN cyclic_edges q n`
   (LABEL_TAC "left_cycle_edge") THENL
@@ -23345,9 +23247,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_OPPOSITES_DISTINCT = prove
         ==> ~(l1 = l2)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk chordless newouter_component outer_subset last_newouter \
-    card_large k_face l1_face l2_face k_l1 e1_e2 e1_edge e2_edge \
-    v_e1 v_e2 e1_k e2_k e1_l1 e2_l2" THEN
+   "disk chordless newouter_component outer_subset last_newouter card_large k_face l1_face l2_face k_l1 e1_e2 e1_edge e2_edge v_e1 v_e2 e1_k e2_k e1_l1 e2_l2" THEN
   DISCH_THEN(LABEL_TAC "l1_l2") THEN
   SUBGOAL_THEN `~((k:real^2->bool) = l1)`
   (LABEL_TAC "k_not_l1") THENL
@@ -23416,8 +23316,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_DEGREE_AT_LEAST_2 =
               plane_graph_face_adjacent_at E c (q(n - 1)) k l2`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk left_outer right_outer chordless newouter_component \
-    outer_subset last_newouter card_large k_face" THEN
+   "disk left_outer right_outer chordless newouter_component outer_subset last_newouter card_large k_face" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -23425,8 +23324,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_DEGREE_AT_LEAST_2 =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   ASM_CASES_TAC `(k:real^2->bool) = outer` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN
     MP_TAC(ISPECL
@@ -23437,8 +23335,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_DEGREE_AT_LEAST_2 =
     ANTS_TAC THENL
      [ASM_REWRITE_TAC[];
       INTRO_TAC
-       "@l1 l2. l1_face l2_face outer_l1 outer_l2 \
-        left_outer_result right_outer_result left_l1 right_l2"] THEN
+       "@l1 l2. l1_face l2_face outer_l1 outer_l2 left_outer_result right_outer_result left_l1 right_l2"] THEN
     ABBREV_TAC `(e1:A->bool) = {q(n - 1),q(n - 2)}` THEN
     ABBREV_TAC `(e2:A->bool) = {q(n - 1),q 0}` THEN
     SUBGOAL_THEN
@@ -23533,9 +23430,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_DEGREE_AT_LEAST_2 =
    PLANE_TRIANGULATED_DISK_INTERNAL_FACE_TWO_EDGE_ADJACENCIES) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "@e1 e2 l1 l2. e1_e2 e1_edge e2_edge v_e1 v_e2 \
-    e1_k e1_l1 e2_k e2_l2 l1_component v_l1 \
-    l2_component v_l2 k_l1 k_l2" THEN
+   "@e1 e2 l1 l2. e1_e2 e1_edge e2_edge v_e1 v_e2 e1_k e1_l1 e2_k e2_l2 l1_component v_l1 l2_component v_l2 k_l1 k_l2" THEN
   SUBGOAL_THEN
    `(l1:real^2->bool) IN
       plane_graph_incident_faces
@@ -23593,8 +23488,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_PATH_ENDPOINTS_ADJACENT =
               (h(m - 1)) (h 0)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk left_outer right_outer chordless newouter_component \
-    outer_subset last_newouter mlarge path coverage" THEN
+   "disk left_outer right_outer chordless newouter_component outer_subset last_newouter mlarge path coverage" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -23602,8 +23496,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_PATH_ENDPOINTS_ADJACENT =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `FINITE(plane_graph_incident_faces
       (V:A->bool) E p c (q(n - 1)))`
@@ -23715,8 +23608,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_ADJACENCY_SPANNING_CYCLE_OUTER =
                 (h(m - 1)) (h 0)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk left_outer right_outer chordless newouter_component \
-    outer_subset last_newouter faces_large" THEN
+   "disk left_outer right_outer chordless newouter_component outer_subset last_newouter faces_large" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -23895,8 +23787,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_EDGE_CYCLE_OUTER =
                          frontier(h((i + 1) MOD m)))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk left_outer right_outer chordless newouter_component \
-    outer_subset last_newouter faces_large" THEN
+   "disk left_outer right_outer chordless newouter_component outer_subset last_newouter faces_large" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -23979,8 +23870,7 @@ let FINITE_RELATION_PATH_ENDPOINTS_RELATED_AT_FIRST = prove
         ==> R (f(n - 1)) (f 0)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "large path coverage irreflexive symmetric first_degree \
-    degree_at_most_2" THEN
+   "large path coverage irreflexive symmetric first_degree degree_at_most_2" THEN
   USE_THEN "path" MP_TAC THEN
   REWRITE_TAC[finite_relation_path] THEN
   INTRO_TAC "vertices injective relation_chain" THEN
@@ -24136,8 +24026,7 @@ let FINITE_RELATION_PATH_ENDPOINTS_RELATED_AT_EITHER = prove
         ==> R (f(n - 1)) (f 0)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "large path coverage irreflexive symmetric endpoint_degree \
-    degree_at_most_2" THEN
+   "large path coverage irreflexive symmetric endpoint_degree degree_at_most_2" THEN
   USE_THEN "endpoint_degree"
    (DISJ_CASES_THEN2
     (LABEL_TAC "first_degree") (LABEL_TAC "last_degree")) THENL
@@ -24229,8 +24118,7 @@ let PLANE_TRIANGULATED_DISK_INTERNAL_INCIDENT_FACE_DEGREE_AT_LEAST_2 =
               plane_graph_face_adjacent_at E c (q(n - 1)) k l2`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk chordless newouter_component outer_subset last_newouter \
-    card_large k_face k_not_outer" THEN
+   "disk chordless newouter_component outer_subset last_newouter card_large k_face k_not_outer" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -24239,9 +24127,7 @@ let PLANE_TRIANGULATED_DISK_INTERNAL_INCIDENT_FACE_DEGREE_AT_LEAST_2 =
    PLANE_TRIANGULATED_DISK_INTERNAL_FACE_TWO_EDGE_ADJACENCIES) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "@e1 e2 l1 l2. e1_e2 e1_edge e2_edge v_e1 v_e2 \
-    e1_k e1_l1 e2_k e2_l2 l1_component v_l1 \
-    l2_component v_l2 k_l1 k_l2" THEN
+   "@e1 e2 l1 l2. e1_e2 e1_edge e2_edge v_e1 v_e2 e1_k e1_l1 e2_k e2_l2 l1_component v_l1 l2_component v_l2 k_l1 k_l2" THEN
   SUBGOAL_THEN
    `(l1:real^2->bool) IN
       plane_graph_incident_faces
@@ -24293,8 +24179,7 @@ let
               (h(m - 1)) (h 0)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk chordless newouter_component outer_subset last_newouter \
-    mlarge path coverage" THEN
+   "disk chordless newouter_component outer_subset last_newouter mlarge path coverage" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -24302,8 +24187,7 @@ let
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `FINITE(plane_graph_incident_faces
       (V:A->bool) E p c (q(n - 1)))`
@@ -24438,8 +24322,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_EDGE_OUTER_FRONTIER_SMALL =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `FINITE(plane_graph_incident_faces
       (V:A->bool) E p c (q(n - 1)))`
@@ -24591,8 +24474,7 @@ let
                 (h(m - 1)) (h 0)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk chordless newouter_component outer_subset last_newouter \
-    faces_large" THEN
+   "disk chordless newouter_component outer_subset last_newouter faces_large" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -24680,8 +24562,7 @@ let PLANE_TRIANGULATED_DISK_CHORDLESS_OUTER_FRONTIER_EDGES_AT_LAST =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `{(q:num->A)(n - 1),q(n - 2)} IN cyclic_edges q n /\
     {(q:num->A)(n - 1),q 0} IN cyclic_edges q n`
@@ -24994,16 +24875,14 @@ let
              radialized_edge_other_endpoint a b v e'} IN E`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk edge_data face not_outer edges_distinct edge edge' \
-    v_e v_e' e_frontier e'_frontier" THEN
+   "disk edge_data face not_outer edges_distinct edge edge' v_e v_e' e_frontier e'_frontier" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
     `outer:real^2->bool`]
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
-  INTRO_TAC "graph embedding nlarge q_injective boundary_edges \
-             boundary_subset outer_component boundary" THEN
+  INTRO_TAC "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   USE_THEN "face" MP_TAC THEN
   REWRITE_TAC[plane_graph_incident_faces; IN_ELIM_THM] THEN
   INTRO_TAC "component v_face" THEN
@@ -25175,8 +25054,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_CYCLE_OUTER_EDGE_PAIR =
             {{q(n - 1),q(n - 2)},{q(n - 1),q 0}}`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk left_boundary right_boundary chordless large path \
-    h_outer edge_cycle" THEN
+   "disk left_boundary right_boundary chordless large path h_outer edge_cycle" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -25184,8 +25062,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_CYCLE_OUTER_EDGE_PAIR =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `INJ (d:num->A->bool) (cyclic_indices m) (:(A->bool))`
   (LABEL_TAC "d_injective") THENL
@@ -25342,8 +25219,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_CYCLE_OUTER_EDGE_PAIR =
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[];
     INTRO_TAC
-     "@l1 l2. l1_face l2_face l1_adjacent l2_adjacent \
-      left_outer right_outer left_l1 right_l2"] THEN
+     "@l1 l2. l1_face l2_face l1_adjacent l2_adjacent left_outer right_outer left_l1 right_l2"] THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -25443,8 +25319,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_CYCLE_NEIGHBOR_PATH =
                    ==> {w i,w(i + 1)} IN E)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk left_boundary right_boundary chordless large path coverage \
-    h_outer edge_cycle" THEN
+   "disk left_boundary right_boundary chordless large path coverage h_outer edge_cycle" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -25452,8 +25327,7 @@ let PLANE_TRIANGULATED_DISK_INCIDENT_FACE_CYCLE_NEIGHBOR_PATH =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   MP_TAC(ISPECL [`V:A->bool`; `E:(A->bool)->bool`]
    FINITE_SIMPLE_GRAPH_ENDPOINT_FUNCTIONS) THEN
   ASM_REWRITE_TAC[] THEN
@@ -25784,8 +25658,7 @@ let PLANE_TRIANGULATED_DISK_DELETE_LAST_LARGE_INCIDENT_FACE_CYCLE =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `(q:num->A)(n - 1) IN cyclic_vertices q n`
   (LABEL_TAC "last_boundary") THENL
@@ -25879,8 +25752,7 @@ let PLANE_TRIANGULATED_DISK_TWO_INCIDENT_FACES_DATA =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `(q:num->A)(n - 1) IN cyclic_vertices q n`
   (LABEL_TAC "last_boundary") THENL
@@ -25907,8 +25779,7 @@ let PLANE_TRIANGULATED_DISK_TWO_INCIDENT_FACES_DATA =
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[];
     INTRO_TAC
-     "@l1 l2. l1_face l2_face outer_l1 outer_l2 \
-      left_outer right_outer left_l1 right_l2"] THEN
+     "@l1 l2. l1_face l2_face outer_l1 outer_l2 left_outer right_outer left_l1 right_l2"] THEN
   SUBGOAL_THEN `~((outer:real^2->bool) = l1)`
   (LABEL_TAC "outer_l1_distinct") THENL
    [USE_THEN "outer_l1" MP_TAC THEN
@@ -26313,8 +26184,7 @@ let PLANE_TRIANGULATED_DISK_DELETE_LAST_TWO_INCIDENT_FACES = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding _ q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding _ q_injective boundary_edges boundary_subset outer_component boundary" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -26443,8 +26313,7 @@ let PLANE_TRIANGULATED_DISK_TRIANGULAR_BOUNDARY_TWO_FACES_VERTICES =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding _ q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding _ q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `induced_subgraph_edges (E:(A->bool)->bool)
       (cyclic_vertices q 3) = cyclic_edges q 3`
@@ -26472,8 +26341,7 @@ let PLANE_TRIANGULATED_DISK_TRIANGULAR_BOUNDARY_TWO_FACES_VERTICES =
    [ARITH_RULE `(3:num) - 1 = 2`;
     ARITH_RULE `(3:num) - 2 = 1`] THEN
   INTRO_TAC
-   "_ neighbor_edge \
-    (@l. l_face l_not_outer left_l right_l)" THEN
+   "_ neighbor_edge (@l. l_face l_not_outer left_l right_l)" THEN
   USE_THEN "l_face" MP_TAC THEN
   REWRITE_TAC[plane_graph_incident_faces; IN_ELIM_THM] THEN
   INTRO_TAC "l_component q2_l" THEN
@@ -26813,8 +26681,7 @@ let PLANE_TRIANGULATED_DISK_LAST_INCIDENT_FACES_CARD_AT_LEAST_2 =
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[];
     INTRO_TAC
-     "@l1 l2. l1_face l2_face outer_l1 outer_l2 \
-      left_outer right_outer left_l1 right_l2"] THEN
+     "@l1 l2. l1_face l2_face outer_l1 outer_l2 left_outer right_outer left_l1 right_l2"] THEN
   SUBGOAL_THEN `~((outer:real^2->bool) = l1)`
   (LABEL_TAC "distinct") THENL
    [USE_THEN "outer_l1" MP_TAC THEN
@@ -27904,9 +27771,7 @@ let UNBOUNDED_CONNECTED_FRONTIER_AVOIDS_JORDAN_INSIDE = prove
   MP_TAC(ISPEC `g:real^1->real^2` JORDAN_INSIDE_OUTSIDE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "inside_nonempty inside_open inside_connected outside_nonempty \
-    outside_open outside_connected inside_bounded outside_unbounded \
-    sides_disjoint sides_union inside_frontier outside_frontier" THEN
+   "inside_nonempty inside_open inside_connected outside_nonempty outside_open outside_connected inside_bounded outside_unbounded sides_disjoint sides_union inside_frontier outside_frontier" THEN
   DISCH_THEN(LABEL_TAC "x_inside") THEN
   SUBGOAL_THEN
    `inside(path_image g) IN
@@ -27952,8 +27817,7 @@ let UNBOUNDED_CONNECTED_FRONTIER_AVOIDS_TWO_ARC_INSIDE = prove
         ==> ~(x IN inside(path_image a UNION path_image b))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "a_arc a_start a_finish b_arc b_start b_finish intersection \
-    connected unbounded subset x_frontier" THEN
+   "a_arc a_start a_finish b_arc b_start b_finish intersection connected unbounded subset x_frontier" THEN
   MP_TAC(ISPECL
    [`(a:real^1->real^2) ++ reversepath(b:real^1->real^2)`;
     `k:real^2->bool`; `x:real^2`]
@@ -27980,8 +27844,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_INTER_INSIDE = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding large q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding large q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN `simple_graph_cycle (E:(A->bool)->bool) q n`
   (LABEL_TAC "cycle") THENL
    [REWRITE_TAC[simple_graph_cycle] THEN ASM_REWRITE_TAC[];
@@ -28028,8 +27891,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_INTER_INSIDE = prove
   DISCH_THEN(X_CHOOSE_THEN `a:real^1->real^2`
    (X_CHOOSE_THEN `b:real^1->real^2` MP_TAC)) THEN
   INTRO_TAC
-   "a_arc a_start a_finish a_image b_arc b_start b_finish b_image \
-    ab_inter boundary_union" THEN
+   "a_arc a_start a_finish a_image b_arc b_start b_finish b_image ab_inter boundary_union" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `(q:num->A) j`;
@@ -28335,8 +28197,7 @@ let PLANE_GRAPH_EMBEDDING_CHORD_EXPLICIT_THETA = prove
   DISCH_THEN(X_CHOOSE_THEN `a:real^1->real^2`
    (X_CHOOSE_THEN `b:real^1->real^2` MP_TAC)) THEN
   INTRO_TAC
-   "a_arc a_start a_finish a_image b_arc b_start b_finish b_image \
-    ab_inter boundary_union" THEN
+   "a_arc a_start a_finish a_image b_arc b_start b_finish b_image ab_inter boundary_union" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `(q:num->A) j`;
@@ -28447,9 +28308,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SPLIT = prove
    (X_CHOOSE_THEN `b:real^1->real^2`
     (X_CHOOSE_THEN `d:real^1->real^2` MP_TAC))) THEN
   INTRO_TAC
-   "points_distinct a_arc a_start a_finish a_image \
-    b_arc b_start b_finish b_image d_arc d_start d_finish d_image \
-    ab_inter ad_inter bd_inter boundary_union" THEN
+   "points_distinct a_arc a_start a_finish a_image b_arc b_start b_finish b_image d_arc d_start d_finish d_image ab_inter ad_inter bd_inter boundary_union" THEN
   SUBGOAL_THEN
    `~(path_image(d:real^1->real^2) INTER
       inside(path_image a UNION path_image b) = {})`
@@ -28667,8 +28526,7 @@ let THETA_SPLIT_CLOSED_SIDES = prove
             closure(inside(path_image a UNION path_image b))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "distinct a_arc a_start a_finish b_arc b_start b_finish \
-    d_arc d_start d_finish ab_inter ad_inter bd_inter crosses" THEN
+   "distinct a_arc a_start a_finish b_arc b_start b_finish d_arc d_start d_finish ab_inter ad_inter bd_inter crosses" THEN
   MP_TAC(ISPECL
    [`a:real^1->real^2`; `b:real^1->real^2`;
     `d:real^1->real^2`; `u:real^2`; `v:real^2`]
@@ -28859,9 +28717,7 @@ let PLANE_GRAPH_THETA_CLOSED_SIDE_VERTICES = prove
               V p (path_image b UNION path_image d) = e`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding edge distinct \
-    a_arc a_start a_finish b_arc b_start b_finish \
-    d_arc d_start d_finish ab_inter ad_inter bd_inter d_image crosses" THEN
+   "graph embedding edge distinct a_arc a_start a_finish b_arc b_start b_finish d_arc d_start d_finish ab_inter ad_inter bd_inter d_image crosses" THEN
   MP_TAC(ISPECL
    [`a:real^1->real^2`; `b:real^1->real^2`;
     `d:real^1->real^2`; `u:real^2`; `v:real^2`]
@@ -29078,8 +28934,7 @@ let PLANE_TRIANGULATED_DISK_BOUNDARY_CHORD_INTER_INSIDE = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding large q_injective boundary_edges boundary_subset \
-    outer_component boundary_face" THEN
+   "graph embedding large q_injective boundary_edges boundary_subset outer_component boundary_face" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `e:A->bool`]
    FINITE_SIMPLE_GRAPH_EDGE) THEN
@@ -29208,8 +29063,7 @@ let PLANE_TRIANGULATED_DISK_CARRIER_SUBSET_CLOSED_INSIDE = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding large q_injective boundary_edges boundary_subset \
-    outer_component boundary_face" THEN
+   "graph embedding large q_injective boundary_edges boundary_subset outer_component boundary_face" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -29234,9 +29088,7 @@ let PLANE_TRIANGULATED_DISK_CARRIER_SUBSET_CLOSED_INSIDE = prove
   MP_TAC(ISPEC `j:real^1->real^2` JORDAN_INSIDE_OUTSIDE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "inside_nonempty inside_open inside_connected outside_nonempty \
-    outside_open outside_connected inside_bounded outside_unbounded \
-    sides_disjoint sides_union inside_frontier outside_frontier" THEN
+   "inside_nonempty inside_open inside_connected outside_nonempty outside_open outside_connected inside_bounded outside_unbounded sides_disjoint sides_union inside_frontier outside_frontier" THEN
   SUBGOAL_THEN
    `outer SUBSET outside(path_image(j:real^1->real^2))`
   (LABEL_TAC "outer_outside") THENL
@@ -29579,8 +29431,7 @@ let PLANE_GRAPH_EMBEDDING_CLOSED_SIDE_EDGE = prove
                     e SUBSET plane_graph_closed_side_vertices V p r`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding separator vertices overlap closed_inter \
-    carrier_cover" THEN
+   "graph embedding separator vertices overlap closed_inter carrier_cover" THEN
   X_GEN_TAC `e:A->bool` THEN DISCH_THEN(LABEL_TAC "edge") THEN
   SUBGOAL_THEN `(e:A->bool) SUBSET V /\ e HAS_SIZE 2`
   (CONJUNCTS_THEN2 (LABEL_TAC "edge_subset")
@@ -29784,8 +29635,7 @@ let PLANE_GRAPH_EMBEDDING_CLOSED_SIDE_EDGE_PARTITION = prove
               (plane_graph_closed_side_vertices V p r)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding separator vertices overlap closed_inter \
-    carrier_cover" THEN
+   "graph embedding separator vertices overlap closed_inter carrier_cover" THEN
   SUBGOAL_THEN
    `!e:A->bool.
         e IN E
@@ -30175,9 +30025,7 @@ let JORDAN_OUTSIDE_COMPONENT_OF_INTERMEDIATE_CARRIER = prove
   MP_TAC(ISPEC `j:real^1->real^2` JORDAN_INSIDE_OUTSIDE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "inside_nonempty inside_open inside_connected outside_nonempty \
-    outside_open outside_connected inside_bounded outside_unbounded \
-    sides_disjoint sides_union inside_frontier outside_frontier" THEN
+   "inside_nonempty inside_open inside_connected outside_nonempty outside_open outside_connected inside_bounded outside_unbounded sides_disjoint sides_union inside_frontier outside_frontier" THEN
   SUBGOAL_THEN
    `closure(inside(path_image(j:real^1->real^2))) =
     inside(path_image j) UNION path_image j`
@@ -30210,8 +30058,7 @@ let ARC_PAIR_OUTSIDE_COMPONENT_OF_INTERMEDIATE_CARRIER = prove
             components((:real^2) DIFF carrier)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "distinct a_arc a_start a_finish d_arc d_start d_finish \
-    inter boundary carrier" THEN
+   "distinct a_arc a_start a_finish d_arc d_start d_finish inter boundary carrier" THEN
   MP_TAC(ISPECL
    [`(a:real^1->real^2) ++ reversepath(d:real^1->real^2)`;
     `carrier:real^2->bool`]
@@ -30389,10 +30236,7 @@ let PLANE_GRAPH_EMBEDDING_CHORD_EXPLICIT_SIDE_BOUNDARIES = prove
                   V p (path_image b UNION path_image d))) p c`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph embedding cycle jpositive bound chord \
-    a_arc a_start a_finish a_image \
-    b_arc b_start b_finish b_image \
-    d_arc d_start d_finish d_image ad_inter bd_inter" THEN
+   "graph embedding cycle jpositive bound chord a_arc a_start a_finish a_image b_arc b_start b_finish b_image d_arc d_start d_finish d_image ad_inter bd_inter" THEN
   SUBGOAL_THEN `~((p:A->real^2)(q j) = p(q(n - 1)))`
   (LABEL_TAC "distinct") THENL
    [MP_TAC(MATCH_MP ARC_DISTINCT_ENDS
@@ -30532,11 +30376,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_COMPONENTS = prove
                     (V:A->bool) p (path_image b UNION path_image d))) p c)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk outer_unbounded jpositive bound chord \
-    a_arc a_start a_finish a_image \
-    b_arc b_start b_finish b_image \
-    d_arc d_start d_finish d_image \
-    ab_inter ad_inter bd_inter boundary_union" THEN
+   "disk outer_unbounded jpositive bound chord a_arc a_start a_finish a_image b_arc b_start b_finish b_image d_arc d_start d_finish d_image ab_inter ad_inter bd_inter boundary_union" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -30544,8 +30384,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_COMPONENTS = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding large q_injective boundary_edges boundary_subset \
-    outer_component boundary_face" THEN
+   "graph embedding large q_injective boundary_edges boundary_subset outer_component boundary_face" THEN
   SUBGOAL_THEN `simple_graph_cycle (E:(A->bool)->bool) q n`
   (LABEL_TAC "cycle") THENL
    [REWRITE_TAC[simple_graph_cycle] THEN ASM_REWRITE_TAC[];
@@ -30729,11 +30568,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_PARTITIONS = prove
                 V p (path_image b UNION path_image d))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk outer_unbounded jpositive bound chord \
-    a_arc a_start a_finish a_image \
-    b_arc b_start b_finish b_image \
-    d_arc d_start d_finish d_image \
-    ab_inter ad_inter bd_inter boundary_union" THEN
+   "disk outer_unbounded jpositive bound chord a_arc a_start a_finish a_image b_arc b_start b_finish b_image d_arc d_start d_finish d_image ab_inter ad_inter bd_inter boundary_union" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -30741,8 +30576,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_PARTITIONS = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding large q_injective boundary_edges boundary_subset \
-    outer_component boundary_face" THEN
+   "graph embedding large q_injective boundary_edges boundary_subset outer_component boundary_face" THEN
   SUBGOAL_THEN `simple_graph_cycle (E:(A->bool)->bool) q n`
   (LABEL_TAC "cycle") THENL
    [REWRITE_TAC[simple_graph_cycle] THEN ASM_REWRITE_TAC[];
@@ -30942,8 +30776,7 @@ let ARC_PAIR_OUTSIDE_FACE_VERTICES_CYCLE = prove
             cyclic_vertices q n`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "embedding cycle W_subset cycle_subset distinct \
-    a_arc a_start a_finish d_arc d_start d_finish inter carrier" THEN
+   "embedding cycle W_subset cycle_subset distinct a_arc a_start a_finish d_arc d_start d_finish inter carrier" THEN
   SUBGOAL_THEN
    `frontier(outside(path_image(a:real^1->real^2) UNION path_image d)) =
     path_image a UNION path_image d`
@@ -31006,10 +30839,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_OUTER_FACE_VERTICES =
             cyclic_vertices (cyclic_split_right q j) (n - j)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk outer_unbounded jpositive bound chord \
-    a_arc a_start a_finish a_image \
-    b_arc b_start b_finish b_image \
-    d_arc d_start d_finish d_image ad_inter bd_inter" THEN
+   "disk outer_unbounded jpositive bound chord a_arc a_start a_finish a_image b_arc b_start b_finish b_image d_arc d_start d_finish d_image ad_inter bd_inter" THEN
   MP_TAC(MATCH_MP
    (ISPECL
     [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
@@ -31019,8 +30849,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_OUTER_FACE_VERTICES =
    (ASSUME `plane_triangulated_disk
      (V:A->bool) E p c q n outer`)) THEN
   INTRO_TAC
-   "graph embedding large q_injective boundary_edges boundary_subset \
-    outer_component boundary_face" THEN
+   "graph embedding large q_injective boundary_edges boundary_subset outer_component boundary_face" THEN
   SUBGOAL_THEN `simple_graph_cycle (E:(A->bool)->bool) q n`
   (LABEL_TAC "cycle") THENL
    [REWRITE_TAC[simple_graph_cycle] THEN ASM_REWRITE_TAC[];
@@ -31330,9 +31159,7 @@ let PLANE_TRIANGULATED_DISK_INDUCED_CLOSED_SIDE = prove
               W (induced_subgraph_edges E W) p c q' m (outside s)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk outer_unbounded W_subset W_closed large cycle cycle_vertices \
-    boundary_carrier outer_component outer_face carrier_union \
-    other_side closed_inter separator closed bounded" THEN
+   "disk outer_unbounded W_subset W_closed large cycle cycle_vertices boundary_carrier outer_component outer_face carrier_union other_side closed_inter separator closed bounded" THEN
   USE_THEN "disk" MP_TAC THEN
   REWRITE_TAC[plane_triangulated_disk] THEN
   INTRO_TAC
@@ -31481,11 +31308,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_DISKS = prove
   DISCH_THEN(fun th ->
     LABEL_TAC "conditions" th THEN MP_TAC th) THEN
   INTRO_TAC
-   "disk outer_unbounded jpositive bound chord \
-    a_arc a_start a_finish a_image \
-    b_arc b_start b_finish b_image \
-    d_arc d_start d_finish d_image \
-    ab_inter ad_inter bd_inter boundary_union" THEN
+   "disk outer_unbounded jpositive bound chord a_arc a_start a_finish a_image b_arc b_start b_finish b_image d_arc d_start d_finish d_image ab_inter ad_inter bd_inter boundary_union" THEN
   MP_TAC(MATCH_MP
    (ISPECL
     [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
@@ -31496,8 +31319,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_DISKS = prove
     `plane_triangulated_disk
       (V:A->bool) E p c q n outer`)) THEN
   INTRO_TAC
-   "graph embedding large q_injective boundary_edges boundary_subset \
-    outer_component boundary_face" THEN
+   "graph embedding large q_injective boundary_edges boundary_subset outer_component boundary_face" THEN
   SUBGOAL_THEN `simple_graph_cycle (E:(A->bool)->bool) q n`
   (LABEL_TAC "cycle") THENL
    [REWRITE_TAC[simple_graph_cycle] THEN ASM_REWRITE_TAC[];
@@ -31583,8 +31405,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_DISKS = prove
      PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SIDE_COMPONENTS)
     th)) THEN
   INTRO_TAC
-   "left_boundary left_carrier left_component \
-    right_boundary right_carrier right_component" THEN
+   "left_boundary left_carrier left_component right_boundary right_carrier right_component" THEN
   USE_THEN "conditions" (fun th ->
    MP_TAC(MATCH_MP
     (ISPECL
@@ -31829,8 +31650,7 @@ let PLANE_TRIANGULATED_DISK_DELETE_LAST_OUTER_SUBSET = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN
    `(q:num->A)(n - 1) IN cyclic_vertices q n`
   (LABEL_TAC "last_boundary") THENL
@@ -31927,9 +31747,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_SPLIT_UNBOUNDED_RECURSIVE_STEP =
         ==> recursive_triangulated_disk V E q n`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "disk jpositive bound left_disk left_unbounded \
-    right_disk right_unbounded vertices edges overlap \
-    chord_left chord_right induction" THEN
+   "disk jpositive bound left_disk left_unbounded right_disk right_unbounded vertices edges overlap chord_left chord_right induction" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -31937,8 +31755,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_SPLIT_UNBOUNDED_RECURSIVE_STEP =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   MP_TAC(ISPECL
    [`V1:A->bool`; `E1:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`;
@@ -31947,15 +31764,11 @@ let PLANE_TRIANGULATED_DISK_CHORD_SPLIT_UNBOUNDED_RECURSIVE_STEP =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "left_graph left_embedding left_large left_injective \
-    left_boundary_edges left_boundary_subset left_outer_component \
-    left_boundary" THEN
+   "left_graph left_embedding left_large left_injective left_boundary_edges left_boundary_subset left_outer_component left_boundary" THEN
   USE_THEN "right_disk"
    (MP_TAC o MATCH_MP PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   INTRO_TAC
-   "right_graph right_embedding right_large right_injective \
-    right_boundary_edges right_boundary_subset right_outer_component \
-    right_boundary" THEN
+   "right_graph right_embedding right_large right_injective right_boundary_edges right_boundary_subset right_outer_component right_boundary" THEN
   SUBGOAL_THEN `(q:num->A) 0 IN V1`
   (LABEL_TAC "q0_left") THENL
    [USE_THEN "left_boundary_subset"
@@ -32088,11 +31901,7 @@ let PLANE_TRIANGULATED_DISK_CHORD_UNBOUNDED_RECURSIVE_STEP = prove
    PLANE_TRIANGULATED_DISK_CHORD_EXPLICIT_SPLIT) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "@a b d. a_arc a_start a_finish a_image \
-    b_arc b_start b_finish b_image \
-    d_arc d_start d_finish d_image \
-    ab_inter ad_inter bd_inter boundary_union \
-    sides_disjoint sides_union" THEN
+   "@a b d. a_arc a_start a_finish a_image b_arc b_start b_finish b_image d_arc d_start d_finish d_image ab_inter ad_inter bd_inter boundary_union sides_disjoint sides_union" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`; `p:A->real^2`;
     `c:(A->bool)->real^2->bool`; `q:num->A`; `n:num`;
@@ -32175,8 +31984,7 @@ let PLANE_TRIANGULATED_DISK_CHORDLESS_UNBOUNDED_RECURSIVE_STEP =
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN `(q:num->A)(n - 1) IN V`
   (LABEL_TAC "last_vertex") THENL
    [USE_THEN "boundary_subset"
@@ -32307,8 +32115,7 @@ let PLANE_TRIANGULATED_DISK_UNBOUNDED_RECURSIVE = prove
    PLANE_TRIANGULATED_DISK_INVARIANTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "graph embedding nlarge q_injective boundary_edges boundary_subset \
-    outer_component boundary" THEN
+   "graph embedding nlarge q_injective boundary_edges boundary_subset outer_component boundary" THEN
   SUBGOAL_THEN `FINITE(V:A->bool)` (LABEL_TAC "finite") THENL
    [USE_THEN "graph"
      (ACCEPT_TAC o CONJUNCT1 o REWRITE_RULE[finite_simple_graph]);
@@ -33746,8 +33553,7 @@ let RECURSIVE_TRIANGULATED_DISK_EDGE_BOUND = prove
         `V2:A->bool`; `E2:(A->bool)->bool`;
         `q:num->A`; `n:num`; `j:num`] THEN
       INTRO_TAC
-       "(graph1 bound1) (graph2 bound2) \
-        jpositive split_bound injective overlap chord1 chord2" THEN
+       "(graph1 bound1) (graph2 bound2) jpositive split_bound injective overlap chord1 chord2" THEN
       CONJ_TAC THENL
        [MATCH_MP_TAC FINITE_SIMPLE_GRAPH_UNION THEN ASM_REWRITE_TAC[];
         ALL_TAC] THEN
@@ -47822,8 +47628,7 @@ let RECURSIVE_TRIANGULATED_DISK_EDGE_COUNT = prove
       [`V:A->bool`; `E:(A->bool)->bool`; `q:num->A`;
         `n:num`; `k:num`; `w:num->A`] THEN
       INTRO_TAC
-       "(graph old_injective old_count) nlarge injective fresh \
-        neighbors first last" THEN
+       "(graph old_injective old_count) nlarge injective fresh neighbors first last" THEN
       REPEAT CONJ_TAC THENL
        [MATCH_MP_TAC FINITE_SIMPLE_GRAPH_INSERT_VERTEX_STAR THEN
         ASM_REWRITE_TAC[];
@@ -47856,9 +47661,7 @@ let RECURSIVE_TRIANGULATED_DISK_EDGE_COUNT = prove
         `V2:A->bool`; `E2:(A->bool)->bool`;
         `q:num->A`; `n:num`; `j:num`] THEN
       INTRO_TAC
-       "(graph1 left_injective count1) \
-        (graph2 right_injective count2) \
-        jpositive bound injective overlap chord1 chord2" THEN
+       "(graph1 left_injective count1) (graph2 right_injective count2) jpositive bound injective overlap chord1 chord2" THEN
       REPEAT CONJ_TAC THENL
        [MATCH_MP_TAC FINITE_SIMPLE_GRAPH_UNION THEN ASM_REWRITE_TAC[];
         USE_THEN "injective" ACCEPT_TAC;
@@ -48013,8 +47816,7 @@ let RECURSIVE_TRIANGULATED_DISK_CONG = prove
         `V2:A->bool`; `E2:(A->bool)->bool`;
         `q:num->A`; `n:num`; `j:num`] THEN
       INTRO_TAC
-       "induction1 induction2 jpositive bound injective \
-        overlap chord1 chord2" THEN
+       "induction1 induction2 jpositive bound injective overlap chord1 chord2" THEN
       X_GEN_TAC `p:num->A` THEN DISCH_THEN(LABEL_TAC "agree") THEN
       SUBGOAL_THEN
        `INJ (p:num->A) (cyclic_indices n) (:A)`
@@ -48516,8 +48318,7 @@ let RECURSIVE_TRIANGULATED_DISK_IMAGE = prove
        [`V:A->bool`; `E:(A->bool)->bool`; `q:num->A`;
         `n:num`; `k:num`; `w:num->A`] THEN
       INTRO_TAC
-       "(child_recursive induction) nlarge injective fresh \
-        neighbors first last" THEN
+       "(child_recursive induction) nlarge injective fresh neighbors first last" THEN
       SUBGOAL_THEN
        `recursive_triangulated_disk
          ((q:num->A) (n - 1) INSERT V)
@@ -48596,9 +48397,7 @@ let RECURSIVE_TRIANGULATED_DISK_IMAGE = prove
         `V2:A->bool`; `E2:(A->bool)->bool`;
         `q:num->A`; `n:num`; `j:num`] THEN
       INTRO_TAC
-       "(child_recursive1 induction1) \
-        (child_recursive2 induction2) \
-        jpositive bound injective overlap chord1 chord2" THEN
+       "(child_recursive1 induction1) (child_recursive2 induction2) jpositive bound injective overlap chord1 chord2" THEN
       SUBGOAL_THEN
        `recursive_triangulated_disk
          (V1 UNION V2:A->bool) (E1 UNION E2) q n`
@@ -54545,8 +54344,7 @@ let PERMUTATION_DELETE_TWO_PRESERVES_OLD_ORBIT = prove
             permutation_orbit (permutation_delete_two f x y) a`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "finite permutation x_member y_member distinct a_member b_member \
-    b_orbit" THEN
+   "finite permutation x_member y_member distinct a_member b_member b_orbit" THEN
   SUBGOAL_THEN
    `!z:A. z IN s
           ==> permutation_orbit f (f z) = permutation_orbit f z`
@@ -54611,8 +54409,7 @@ let PERMUTATION_SWAP_COALESCES_DISTINCT_ORBITS = prove
         ==> b IN permutation_orbit (swap(x,y) o f) a`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "finite permutation x_member y_member a_member b_member \
-    distinct_orbits a_affected b_affected" THEN
+   "finite permutation x_member y_member a_member b_member distinct_orbits a_affected b_affected" THEN
   ABBREV_TAC `g:A->A = swap((x:A),(y:A)) o (f:A->A)` THEN
   SUBGOAL_THEN `(g:A->A) permutes s`
   (LABEL_TAC "new_permutation") THENL
@@ -54680,8 +54477,7 @@ let PERMUTATION_DELETE_TWO_AFTER_SWAP = prove
             else f z`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "permutation x_member y_member distinct x_nonfixed y_nonfixed \
-    z_member" THEN
+   "permutation x_member y_member distinct x_nonfixed y_nonfixed z_member" THEN
   SUBGOAL_THEN `(z:A) IN s /\ ~(z = x) /\ ~(z = y)`
   (CONJUNCTS_THEN2 (LABEL_TAC "z_in_s")
     (CONJUNCTS_THEN2 (LABEL_TAC "z_not_x") (LABEL_TAC "z_not_y"))) THENL
@@ -54852,8 +54648,7 @@ let GRAPH_FACE_DELETE_EDGE_MERGES_DISTINCT_FACES = prove
               (graph_delete_rotation r u v) a`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph rotation edge a_dart b_dart distinct_faces \
-    a_affected b_affected" THEN
+   "graph rotation edge a_dart b_dart distinct_faces a_affected b_affected" THEN
   SUBGOAL_THEN
    `~(u:A = v) /\
     ((u:A),(v:A)) IN graph_darts E /\
@@ -56026,8 +55821,7 @@ let EULER_PLANAR_ROTATION_RELATIVE_ROOTED_RESTRICT_PRESERVES_COFACIAL =
      (X_CHOOSE_THEN `y:A` SUBST_ALL_TAC)) THEN
     X_GEN_TAC `r:(A#A)->A#A` THEN
     INTRO_TAC
-     "base_graph base_connected base_nonempty base_edges ordered \
-      a_base b_base euler cofacial" THEN
+     "base_graph base_connected base_nonempty base_edges ordered a_base b_base euler cofacial" THEN
     SUBGOAL_THEN
      `relative_rooted_edge_list E W (t:(A#A)list) /\
       ~(x IN relative_rooted_edge_vertices W t) /\
@@ -56165,8 +55959,7 @@ let EULER_PLANAR_ROTATION_CONNECTED_SUBGRAPH_PRESERVES_COFACIAL = prove
               b IN graph_face B s a`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected subset nonempty vertices_large edge_subset \
-    target_connected a_base b_base cofacial" THEN
+   "euler connected subset nonempty vertices_large edge_subset target_connected a_base b_base cofacial" THEN
   SUBGOAL_THEN `finite_simple_graph (V:A->bool) E`
   (LABEL_TAC "graph") THENL
    [USE_THEN "euler" MP_TAC THEN
@@ -56463,8 +56256,7 @@ let EULER_PLANAR_ROTATION_RELATIVE_ROOTED_RESTRICT_PRESERVES_COFACIAL_SET =
      (X_CHOOSE_THEN `y:A` SUBST_ALL_TAC)) THEN
     X_GEN_TAC `r:(A#A)->A#A` THEN
     INTRO_TAC
-     "base_graph base_connected base_nonempty base_edges ordered \
-      a_base C_base euler cofacial" THEN
+     "base_graph base_connected base_nonempty base_edges ordered a_base C_base euler cofacial" THEN
     SUBGOAL_THEN
      `relative_rooted_edge_list E W (t:(A#A)list) /\
       ~(x IN relative_rooted_edge_vertices W t) /\
@@ -56594,8 +56386,7 @@ let EULER_PLANAR_ROTATION_CONNECTED_SUBGRAPH_PRESERVES_COFACIAL_SET =
               C SUBSET graph_face B s a`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected subset nonempty vertices_large edge_subset \
-    target_connected a_base C_base cofacial" THEN
+   "euler connected subset nonempty vertices_large edge_subset target_connected a_base C_base cofacial" THEN
   SUBGOAL_THEN `finite_simple_graph (V:A->bool) E`
   (LABEL_TAC "graph") THENL
    [USE_THEN "euler" MP_TAC THEN
@@ -58549,8 +58340,7 @@ let SIMPLE_GRAPH_CYCLE_DELETE_LAST_INDUCED = prove
              (cyclic_delete_last q w n) (n - 1 + k)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph cycle chordless newlarge neighbors w_injective first last \
-    w_edges" THEN
+   "graph cycle chordless newlarge neighbors w_injective first last w_edges" THEN
   SUBGOAL_THEN
    `!r. r + 1 < k + 2 ==> {(w:num->A) r,w(r + 1)} IN E`
   (LABEL_TAC "chain") THENL
@@ -60250,13 +60040,11 @@ let FAN_DELETE_FACE_SUCCESSOR_NONINCIDENT = prove
   REPEAT GEN_TAC THEN SPEC_TAC(`t:num`,`t:num`) THEN
   INDUCT_TAC THENL
    [INTRO_TAC
-     "euler connected injective avoids spokes chain dart successor \
-      a_avoids b_avoids c_avoids d_avoids bound" THEN
+     "euler connected injective avoids spokes chain dart successor a_avoids b_avoids c_avoids d_avoids bound" THEN
     ASM_REWRITE_TAC[fan_delete_edges; fan_delete_rotation];
     POP_ASSUM(LABEL_TAC "induction") THEN
     INTRO_TAC
-     "euler connected injective avoids spokes chain dart successor \
-      a_avoids b_avoids c_avoids d_avoids suc_bound" THEN
+     "euler connected injective avoids spokes chain dart successor a_avoids b_avoids c_avoids d_avoids suc_bound" THEN
     SUBGOAL_THEN `(t:num) < m` (LABEL_TAC "bound") THENL
      [ASM_ARITH_TAC;
       ALL_TAC] THEN
@@ -60647,15 +60435,13 @@ let FAN_DELETE_FACE_SUCCESSOR_NONINCIDENT_FROM = prove
   SPEC_TAC(`t:num`,`t:num`) THEN INDUCT_TAC THENL
    [X_GEN_TAC `s:num` THEN
     INTRO_TAC
-     "euler connected injective avoids spokes chain dart at_stage \
-      a_avoids b_avoids c_avoids d_avoids lower bound" THEN
+     "euler connected injective avoids spokes chain dart at_stage a_avoids b_avoids c_avoids d_avoids lower bound" THEN
     SUBGOAL_THEN `(s:num) = 0` SUBST_ALL_TAC THENL
      [ASM_ARITH_TAC;
       USE_THEN "at_stage" ACCEPT_TAC];
     POP_ASSUM(LABEL_TAC "induction") THEN X_GEN_TAC `s:num` THEN
     INTRO_TAC
-     "euler connected injective avoids spokes chain dart at_stage \
-      a_avoids b_avoids c_avoids d_avoids lower suc_bound" THEN
+     "euler connected injective avoids spokes chain dart at_stage a_avoids b_avoids c_avoids d_avoids lower suc_bound" THEN
     ASM_CASES_TAC `(s:num) = SUC t` THENL
      [FIRST_X_ASSUM SUBST_ALL_TAC THEN
       USE_THEN "at_stage" ACCEPT_TAC;
@@ -61007,8 +60793,7 @@ let FAN_DELETE_PREDECESSOR_SUCCESSOR_AT_FIRST = prove
              (p,w 0) = (w 0,w 1)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected injective avoids spokes chain triangles dart \
-    old_predecessor p_avoids bound" THEN
+   "euler connected injective avoids spokes chain triangles dart old_predecessor p_avoids bound" THEN
   SUBGOAL_THEN
    `finite_simple_graph (V:A->bool) E /\
     graph_rotation E (r:(A#A)->A#A)`
@@ -61078,8 +60863,7 @@ let FAN_DELETE_PREDECESSOR_SUCCESSOR = prove
              (p,w 0) = (w 0,w 1)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected injective avoids spokes chain triangles dart \
-    old_predecessor p_avoids positive bound" THEN
+   "euler connected injective avoids spokes chain triangles dart old_predecessor p_avoids positive bound" THEN
   SUBGOAL_THEN
    `graph_face_successor
      (fan_delete_edges x w E 1)
@@ -61122,13 +60906,11 @@ let FAN_DELETE_SPOKE_SUCCESSOR_REMAINS = prove
   REPEAT GEN_TAC THEN SPEC_TAC(`t:num`,`t:num`) THEN
   INDUCT_TAC THENL
    [INTRO_TAC
-     "euler connected injective avoids spokes chain successor \
-      c_avoids d_avoids lower index" THEN
+     "euler connected injective avoids spokes chain successor c_avoids d_avoids lower index" THEN
     ASM_REWRITE_TAC[fan_delete_edges; fan_delete_rotation];
     POP_ASSUM(LABEL_TAC "induction") THEN
     INTRO_TAC
-     "euler connected injective avoids spokes chain successor \
-      c_avoids d_avoids lower index" THEN
+     "euler connected injective avoids spokes chain successor c_avoids d_avoids lower index" THEN
     SUBGOAL_THEN `(t:num) <= j` (LABEL_TAC "old_lower") THENL
      [ASM_ARITH_TAC;
       ALL_TAC] THEN
@@ -61367,8 +61149,7 @@ let FAN_DELETE_LAST_NONINCIDENT_SUCCESSOR = prove
              (a,b) = (c,d)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected injective avoids spokes chain dart successor \
-    a_avoids b_avoids c_avoids d_avoids bound" THEN
+   "euler connected injective avoids spokes chain dart successor a_avoids b_avoids c_avoids d_avoids bound" THEN
   SUBGOAL_THEN
    `finite_simple_graph
       (V:A->bool) (fan_delete_edges x w E (m - 1)) /\
@@ -61438,8 +61219,7 @@ let FAN_DELETE_PENDANT_TAIL_SUCCESSOR = prove
              (w(m - 2),w(m - 1)) = (c,d)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected injective avoids spokes chain triangles \
-    last_successor c_avoids d_avoids bound" THEN
+   "euler connected injective avoids spokes chain triangles last_successor c_avoids d_avoids bound" THEN
   SUBGOAL_THEN
    `graph_face_successor
      (fan_delete_edges x w E (m - 1))
@@ -61744,8 +61524,7 @@ let FAN_DELETE_PENDANT_NONINCIDENT_SUCCESSOR = prove
              (a,b) = (c,d)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected injective avoids spokes chain dart successor \
-    a_avoids b_avoids c_avoids d_avoids bound" THEN
+   "euler connected injective avoids spokes chain dart successor a_avoids b_avoids c_avoids d_avoids bound" THEN
   SUBGOAL_THEN
    `graph_face_successor
      (fan_delete_edges x w E (m - 1))
@@ -61800,8 +61579,7 @@ let FAN_DELETE_PENDANT_PREDECESSOR_SUCCESSOR = prove
              (p,w 0) = (w 0,w 1)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected injective avoids spokes chain triangles dart \
-    predecessor p_avoids bound" THEN
+   "euler connected injective avoids spokes chain triangles dart predecessor p_avoids bound" THEN
   SUBGOAL_THEN
    `graph_face_successor
      (fan_delete_edges x w E (m - 1))
@@ -61996,8 +61774,7 @@ let FAN_DELETE_LAST_CYCLIC_FACE_SUCCESSORS = prove
              (cyclic_delete_last q w n) (n - 1 + k)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected cycle old_successors injective avoids spokes chain \
-    triangles first last nlarge" THEN
+   "euler connected cycle old_successors injective avoids spokes chain triangles first last nlarge" THEN
   USE_THEN "cycle" (MP_TAC o REWRITE_RULE[simple_graph_cycle]) THEN
   INTRO_TAC "cycle_large q_injective boundary_edges" THEN
   SUBGOAL_THEN
@@ -62288,8 +62065,7 @@ let BOUNDARY_EULER_ROTATION_FAN_DELETE_LAST = prove
                (w(k + 1)) (q(n - 1)))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected cycle old_successors injective avoids spokes chain \
-    triangles neighbors first last nlarge" THEN
+   "euler connected cycle old_successors injective avoids spokes chain triangles neighbors first last nlarge" THEN
   SUBGOAL_THEN `finite_simple_graph (V:A->bool) E`
   (LABEL_TAC "graph") THENL
    [USE_THEN "euler" MP_TAC THEN
@@ -62801,8 +62577,7 @@ let MAXIMAL_BOUNDARY_EULER_ROTATION_DELETE_LAST_CHORDLESS = prove
                (cyclic_delete_last q w n) (n - 1 + k) s`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "boundary cycle connected maximal vertices_large chordless \
-    replacement_large" THEN
+   "boundary cycle connected maximal vertices_large chordless replacement_large" THEN
   SUBGOAL_THEN `finite_simple_graph (V:A->bool) E`
   (LABEL_TAC "graph") THENL
    [USE_THEN "boundary" MP_TAC THEN
@@ -65341,16 +65116,12 @@ let GRAPH_SUBDIVISION_K4_FROM_FOUR_PATHS = prove
                p0 l0 p1 l1 p2 l2 p3 l3)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "(ab ac ad bc bd cd) (l0_positive l1_positive l2_positive l3_positive) \
-    (p0_first p0_last p1_first p1_last p2_first p2_last p3_first p3_last) \
-    (p0_injective p1_injective p2_injective p3_injective) \
-    p0_fresh p1_fresh p2_fresh p3_fresh" THEN
+   "(ab ac ad bc bd cd) (l0_positive l1_positive l2_positive l3_positive) (p0_first p0_last p1_first p1_last p2_first p2_last p3_first p3_last) (p0_injective p1_injective p2_injective p3_injective) p0_fresh p1_fresh p2_fresh p3_fresh" THEN
   MP_TAC(SPECL [`a:A`; `b:A`; `c:A`; `d:A`]
    FOUR_DISTINCT_GRAPH_FACTS) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "base_graph edge_ab edge_bc edge_cd edge_da \
-    bc_ab cd_ab cd_bc da_ab da_bc da_cd" THEN
+   "base_graph edge_ab edge_bc edge_cd edge_da bc_ab cd_ab cd_bc da_ab da_bc da_cd" THEN
   ABBREV_TAC
    `V0:A->bool =
       {a,b,c,d} UNION indexed_path_vertices (p0:num->A) l0` THEN
@@ -65532,9 +65303,7 @@ let FOUR_PATH_EDGES_CONTAIN_PATHS = prove
               p0 l0 p1 l1 p2 l2 p3 l3`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "(ab ac ad bc bd cd) (l0_positive l1_positive l2_positive l3_positive) \
-    (p0_first p0_last p1_first p1_last p2_first p2_last p3_first p3_last) \
-    p0_fresh p1_fresh p2_fresh p3_fresh" THEN
+   "(ab ac ad bc bd cd) (l0_positive l1_positive l2_positive l3_positive) (p0_first p0_last p1_first p1_last p2_first p2_last p3_first p3_last) p0_fresh p1_fresh p2_fresh p3_fresh" THEN
   MP_TAC(SPECL [`a:A`; `b:A`; `c:A`; `d:A`]
    FOUR_DISTINCT_GRAPH_FACTS) THEN
   ASM_REWRITE_TAC[] THEN
@@ -69237,8 +69006,7 @@ let EULER_PLANAR_ROTATION_SUBDIVISION_PRESERVES_FACE_VERTICES = prove
         ANTS_TAC THENL
          [ASM_REWRITE_TAC[];
           INTRO_TAC
-           "@a. intermediate_euler intermediate_dart \
-            intermediate_marked"] THEN
+           "@a. intermediate_euler intermediate_dart intermediate_marked"] THEN
         USE_THEN "reflection"
          (MATCH_MP_TAC o SPECL
            [`graph_suppress_subdivision_rotation
@@ -69787,8 +69555,7 @@ let BOUNDARY_EULER_ROTATION_CHORDLESS_LAST_OFFSET = prove
           num_WOP))))
       sth)) THEN
   INTRO_TAC
-   "@l. (@w. w_boundary w_cycle w_darts l_large l_before_n chord) \
-    minimal" THEN
+   "@l. (@w. w_boundary w_cycle w_darts l_large l_before_n chord) minimal" THEN
   SUBGOAL_THEN
    `!t. 2 < t /\ t < n ==> ~({(w:num->A) 1,w t} IN E)`
   (LABEL_TAC "next_chordless") THENL
@@ -70448,8 +70215,7 @@ let MAXIMAL_BOUNDARY_EULER_ROTATION_DELETE_EAR = prove
     ANTS_TAC THENL
      [ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
       INTRO_TAC
-       "@k w s. length neighbors injective first last chain \
-        new_cycle new_connected new_maximal"] THEN
+       "@k w s. length neighbors injective first last chain new_cycle new_connected new_maximal"] THEN
     MAP_EVERY EXISTS_TAC
      [`p:num->A`; `k:num`; `w:num->A`; `s:(A#A)->A#A`] THEN
     ASM_REWRITE_TAC[];
@@ -70485,8 +70251,7 @@ let MAXIMAL_BOUNDARY_EULER_ROTATION_DELETE_EAR = prove
      [ASM_REWRITE_TAC[] THEN DISJ1_TAC THEN
       USE_THEN "n_four" ACCEPT_TAC;
       INTRO_TAC
-       "@k w s. length neighbors injective first last chain \
-        new_cycle new_connected new_maximal"] THEN
+       "@k w s. length neighbors injective first last chain new_cycle new_connected new_maximal"] THEN
     MAP_EVERY EXISTS_TAC
      [`p:num->A`; `k:num`; `w:num->A`; `s:(A#A)->A#A`] THEN
     ASM_REWRITE_TAC[]]);;
@@ -70674,9 +70439,7 @@ let MAXIMAL_BOUNDARY_EULER_ROTATION_RECURSIVE_TRIANGULATED_DISK = prove
          ["card"; "large_vertices"] THEN ARITH_TAC;
         ALL_TAC] THEN
       INTRO_TAC
-       "@p k w s. p_maximal p_cycle p_darts p_chordless \
-        neighbor_card neighbors w_injective first last chain \
-        new_cycle new_connected new_maximal" THEN
+       "@p k w s. p_maximal p_cycle p_darts p_chordless neighbor_card neighbors w_injective first last chain new_cycle new_connected new_maximal" THEN
       SUBGOAL_THEN `cyclic_vertices (p:num->A) n SUBSET V`
       (LABEL_TAC "p_boundary_subset") THENL
        [USE_THEN "graph" (fun gth ->
@@ -74408,8 +74171,7 @@ let FINITE_SIMPLE_GRAPH_ADJACENT_SEPARATOR_COMPONENT = prove
   REPEAT GEN_TAC THEN INTRO_TAC "graph component" THEN
   USE_THEN "component" MP_TAC THEN
   REWRITE_TAC[graph_adjacent_separator_component] THEN
-  INTRO_TAC "@u v w x. edge uv_distinct uw_distinct vw_distinct \
-             separator x_vertex C_eq" THEN
+  INTRO_TAC "@u v w x. edge uv_distinct uw_distinct vw_distinct separator x_vertex C_eq" THEN
   USE_THEN "C_eq" SUBST1_TAC THEN CONJ_TAC THENL
    [MATCH_MP_TAC FINITE_GRAPH_DELETED_COMPONENT THEN
     USE_THEN "graph" ACCEPT_TAC;
@@ -74772,8 +74534,7 @@ let VERTEX_3_CONNECTED_GRAPH_COMPONENT_ADD_PAIR_DELETE_CONNECTED = prove
              ((C UNION {u,v}) DELETE y)
              (induced_subgraph_edges E ((C UNION {u,v}) DELETE y))`,
   REPEAT GEN_TAC THEN
-  INTRO_TAC "connected uv_distinct uw_distinct vw_distinct separator \
-             x_vertex C_eq uv_edge y_member" THEN
+  INTRO_TAC "connected uv_distinct uw_distinct vw_distinct separator x_vertex C_eq uv_edge y_member" THEN
   SUBGOAL_THEN `finite_simple_graph (V:A->bool) E`
   (LABEL_TAC "graph") THENL
    [MATCH_MP_TAC VERTEX_K_CONNECTED_GRAPH_FINITE_SIMPLE THEN
@@ -75098,8 +74859,7 @@ let VERTEX_3_CONNECTED_GRAPH_CONTRACTIBLE_EDGE = prove
   USE_THEN "H_component" MP_TAC THEN
   REWRITE_TAC[graph_adjacent_separator_component] THEN
   INTRO_TAC
-   "@u v w x. uv_edge uv_distinct uw_distinct vw_distinct \
-    separator x_vertex H_eq" THEN
+   "@u v w x. uv_edge uv_distinct uw_distinct vw_distinct separator x_vertex H_eq" THEN
   SUBGOAL_THEN `FINITE(H:A->bool)` (LABEL_TAC "H_finite") THENL
    [USE_THEN "H_eq" (fun eqth ->
      ACCEPT_TAC(REWRITE_RULE[GSYM eqth]
@@ -79108,12 +78868,7 @@ let GRAPH_SUBDIVISION_EXTEND_FOUR_CYCLE_EDGES_BY_PATHS = prove
                p0 l0 p1 l1 p2 l2 p3 l3)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph edge0 edge1 edge2 edge3 \
-    (ab ac ad bc bd cd) \
-    (l0_positive l1_positive l2_positive l3_positive) \
-    (p0_first p0_last p1_first p1_last p2_first p2_last p3_first p3_last) \
-    (p0_injective p1_injective p2_injective p3_injective) \
-    p0_fresh p1_fresh p2_fresh p3_fresh" THEN
+   "graph edge0 edge1 edge2 edge3 (ab ac ad bc bd cd) (l0_positive l1_positive l2_positive l3_positive) (p0_first p0_last p1_first p1_last p2_first p2_last p3_first p3_last) (p0_injective p1_injective p2_injective p3_injective) p0_fresh p1_fresh p2_fresh p3_fresh" THEN
   ABBREV_TAC `V0:A->bool =
     V UNION indexed_path_vertices (p0:num->A) l0` THEN
   ABBREV_TAC `E0:(A->bool)->bool =
@@ -79257,11 +79012,7 @@ let GRAPH_SUBDIVISION_EXTEND_THREE_CYCLE_EDGES_BY_PATHS = prove
                p0 l0 p1 l1 p2 l2)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph edge0 edge1 edge2 ab ac bc \
-    l0_positive l1_positive l2_positive \
-    p0_first p0_last p1_first p1_last p2_first p2_last \
-    p0_injective p1_injective p2_injective \
-    p0_fresh p1_fresh p2_fresh" THEN
+   "graph edge0 edge1 edge2 ab ac bc l0_positive l1_positive l2_positive p0_first p0_last p1_first p1_last p2_first p2_last p0_injective p1_injective p2_injective p0_fresh p1_fresh p2_fresh" THEN
   ABBREV_TAC `V0:A->bool =
     V UNION indexed_path_vertices (p0:num->A) l0` THEN
   ABBREV_TAC `E0:(A->bool)->bool =
@@ -79506,18 +79257,12 @@ let GRAPH_KURATOWSKI_OBSTRUCTION_ALTERNATING_SPOKES = prove
         ==> graph_kuratowski_obstruction V E`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "i_positive ij jk kn injective cycle_vertices cycle_edges \
-    u_vertex v_vertex uv u_outside v_outside \
-    edge_uv edge_u0 edge_uj edge_vi edge_vk" THEN
+   "i_positive ij jk kn injective cycle_vertices cycle_edges u_vertex v_vertex uv u_outside v_outside edge_uv edge_u0 edge_uj edge_vi edge_vk" THEN
   MP_TAC(ISPECL [`q:num->A`; `n:num`; `i:num`; `j:num`; `k:num`]
     CYCLIC_FOUR_PATH_DATA) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "(q0i q0j q0k qij qik qjk) \
-    (l1_positive l2_positive l3_positive) \
-    (p1_first p1_last p2_first p2_last p3_first p3_last) \
-    (p0_injective p1_injective p2_injective p3_injective) \
-    p0_fresh_four p1_fresh_four p2_fresh_four p3_fresh_four" THEN
+   "(q0i q0j q0k qij qik qjk) (l1_positive l2_positive l3_positive) (p1_first p1_last p2_first p2_last p3_first p3_last) (p0_injective p1_injective p2_injective p3_injective) p0_fresh_four p1_fresh_four p2_fresh_four p3_fresh_four" THEN
   SUBGOAL_THEN `(q:num->A) 0 IN cyclic_vertices q n`
   (LABEL_TAC "q0_cycle") THENL
    [REWRITE_TAC[IN_CYCLIC_VERTICES] THEN
@@ -80040,18 +79785,12 @@ let GRAPH_KURATOWSKI_OBSTRUCTION_COMMON_SPOKES = prove
         ==> graph_kuratowski_obstruction V E`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "i_positive ij jn injective cycle_vertices cycle_edges \
-    u_vertex v_vertex uv u_outside v_outside \
-    edge_uv edge_u0 edge_ui edge_uj edge_v0 edge_vi edge_vj" THEN
+   "i_positive ij jn injective cycle_vertices cycle_edges u_vertex v_vertex uv u_outside v_outside edge_uv edge_u0 edge_ui edge_uj edge_v0 edge_vi edge_vj" THEN
   MP_TAC(ISPECL [`q:num->A`; `n:num`; `i:num`; `j:num`]
     CYCLIC_THREE_PATH_DATA) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "(q0i q0j qij) \
-    (l1_positive l2_positive) \
-    (p1_first p1_last p2_first p2_last) \
-    (p0_injective p1_injective p2_injective) \
-    p0_fresh_three p1_fresh_three p2_fresh_three" THEN
+   "(q0i q0j qij) (l1_positive l2_positive) (p1_first p1_last p2_first p2_last) (p0_injective p1_injective p2_injective) p0_fresh_three p1_fresh_three p2_fresh_three" THEN
   SUBGOAL_THEN `(q:num->A) 0 IN cyclic_vertices q n`
   (LABEL_TAC "q0_cycle") THENL
    [REWRITE_TAC[IN_CYCLIC_VERTICES] THEN
@@ -80206,9 +79945,7 @@ let GRAPH_KURATOWSKI_OBSTRUCTION_THREE_COMMON_SPOKES = prove
         ==> graph_kuratowski_obstruction V E`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "ab bc cn injective cycle_vertices cycle_edges \
-    u_vertex v_vertex uv u_outside v_outside edge_uv \
-    edge_ua edge_ub edge_uc edge_va edge_vb edge_vc" THEN
+   "ab bc cn injective cycle_vertices cycle_edges u_vertex v_vertex uv u_outside v_outside edge_uv edge_ua edge_ub edge_uc edge_va edge_vb edge_vc" THEN
   SUBGOAL_THEN
    `INJ (\i. (q:num->A)((i + a) MOD n))
         (cyclic_indices n) (:A)`
@@ -80252,9 +79989,7 @@ let GRAPH_KURATOWSKI_OBSTRUCTION_FOUR_ALTERNATING_SPOKES = prove
         ==> graph_kuratowski_obstruction V E`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "ab bc cd dn injective cycle_vertices cycle_edges \
-    u_vertex v_vertex uv u_outside v_outside \
-    edge_uv edge_ua edge_uc edge_vb edge_vd" THEN
+   "ab bc cd dn injective cycle_vertices cycle_edges u_vertex v_vertex uv u_outside v_outside edge_uv edge_ua edge_uc edge_vb edge_vd" THEN
   SUBGOAL_THEN
    `INJ (\i. (q:num->A)((i + a) MOD n))
         (cyclic_indices n) (:A)`
@@ -80310,8 +80045,7 @@ let GRAPH_KURATOWSKI_FREE_SPOKE_PATTERNS = prove
                       {u,q b} IN E /\ {u,q d} IN E))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "injective cycle_vertices cycle_edges \
-    u_vertex v_vertex uv u_outside v_outside edge_uv unobstructed" THEN
+   "injective cycle_vertices cycle_edges u_vertex v_vertex uv u_outside v_outside edge_uv unobstructed" THEN
   REPEAT CONJ_TAC THENL
    [MAP_EVERY X_GEN_TAC [`a:num`; `b:num`; `c:num`] THEN
     INTRO_TAC "ab bc cn" THEN
@@ -80593,8 +80327,7 @@ let CYCLIC_SPOKE_INTERVAL = prove
                      ==> Q((i + k) MOD n)))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "exclusive cover P_nonempty Q_nonempty \
-    no_PQPQ no_QPQP" THEN
+   "exclusive cover P_nonempty Q_nonempty no_PQPQ no_QPQP" THEN
   USE_THEN "exclusive"
    (DISJ_CASES_THEN2
     (X_CHOOSE_THEN `k:num`
@@ -80634,8 +80367,7 @@ let CYCLIC_SPOKE_INTERVAL = prove
            [`k:num`; `a:num`; `b:num`; `c:num`; `d:num`]) THEN
         USE_THEN "order" ACCEPT_TAC];
       INTRO_TAC
-       "@a b. a_positive ab b_index Q_interval \
-              not_P_interior P_outside"] THEN
+       "@a b. a_positive ab b_index Q_interval not_P_interior P_outside"] THEN
     DISJ1_TAC THEN
     MAP_EVERY EXISTS_TAC [`k:num`; `a:num`; `b:num`] THEN
     ASM_REWRITE_TAC[] THEN
@@ -80674,8 +80406,7 @@ let CYCLIC_SPOKE_INTERVAL = prove
            [`k:num`; `a:num`; `b:num`; `c:num`; `d:num`]) THEN
         USE_THEN "order" ACCEPT_TAC];
       INTRO_TAC
-       "@a b. a_positive ab b_index P_interval \
-              not_Q_interior Q_outside"] THEN
+       "@a b. a_positive ab b_index P_interval not_Q_interior Q_outside"] THEN
     DISJ2_TAC THEN
     MAP_EVERY EXISTS_TAC [`k:num`; `a:num`; `b:num`] THEN
     ASM_REWRITE_TAC[] THEN
@@ -80709,8 +80440,7 @@ let GRAPH_KURATOWSKI_FREE_ROTATED_SPOKE_PATTERNS = prove
                      {u,q((d + k) MOD n)} IN E))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "injective cycle_vertices cycle_edges \
-    u_vertex v_vertex uv u_outside v_outside edge_uv unobstructed" THEN
+   "injective cycle_vertices cycle_edges u_vertex v_vertex uv u_outside v_outside edge_uv unobstructed" THEN
   CONJ_TAC THENL
    [MAP_EVERY X_GEN_TAC
      [`k:num`; `a:num`; `b:num`; `c:num`; `d:num`] THEN
@@ -80828,9 +80558,7 @@ let GRAPH_KURATOWSKI_FREE_SPOKE_INTERVAL = prove
                      ==> {v,q((i + k) MOD n)} IN E))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "size injective cycle_vertices cycle_edges \
-    u_vertex v_vertex uv u_outside v_outside edge_uv \
-    cover u_nonempty v_nonempty unobstructed" THEN
+   "size injective cycle_vertices cycle_edges u_vertex v_vertex uv u_outside v_outside edge_uv cover u_nonempty v_nonempty unobstructed" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`;
     `q:num->A`; `n:num`; `u:A`; `v:A`]
@@ -81201,8 +80929,7 @@ let CONNECTED_GRAPH_FACE_CYCLIC_WALK = prove
    GRAPH_FACE_CYCLIC_WALK) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "@q. positive start next enumeration darts_injective \
-        face edges successors" THEN
+   "@q. positive start next enumeration darts_injective face edges successors" THEN
   EXISTS_TAC `q:num->A` THEN
   REPEAT CONJ_TAC THENL
    [MATCH_MP_TAC(ISPECL
@@ -82026,8 +81753,7 @@ let ROTATION_SPLIT_VERTEX_FIBER_TRANSITIVE = prove
               ITER n (rotation_split_permutation r a b) d = e`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph rotation a_dart b_dart distinct same_tail \
-    d_dart e_dart same_split_vertex" THEN
+   "graph rotation a_dart b_dart distinct same_tail d_dart e_dart same_split_vertex" THEN
   ABBREV_TAC `p:(A#A)->A#A = rotation_split_permutation r a b` THEN
   SUBGOAL_THEN `FINITE(graph_darts E:(A#A)->bool)`
   (LABEL_TAC "finite_darts") THENL
@@ -83345,8 +83071,7 @@ let VERTEX_2_CONNECTED_EULER_PLANAR_FACE_CYCLIC_WALK = prove
    CONNECTED_GRAPH_FACE_CYCLIC_WALK) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "@q. face_large start next enumeration darts_injective \
-        face edges successors" THEN
+   "@q. face_large start next enumeration darts_injective face edges successors" THEN
   SUBGOAL_THEN
    `INJ (q:num->A)
         (cyclic_indices
@@ -83599,13 +83324,11 @@ let EULER_PLANAR_ROTATION_FAN_DELETE_PREFIX_OF_DELETE_VERTEX = prove
   REPEAT GEN_TAC THEN SPEC_TAC(`t:num`,`t:num`) THEN
   INDUCT_TAC THENL
    [INTRO_TAC
-     "euler connected x_vertex deleted_connected injective avoids \
-      spokes bound" THEN
+     "euler connected x_vertex deleted_connected injective avoids spokes bound" THEN
     ASM_REWRITE_TAC[fan_delete_edges; fan_delete_rotation];
     POP_ASSUM(LABEL_TAC "induction") THEN
     INTRO_TAC
-     "euler connected x_vertex deleted_connected injective avoids \
-      spokes new_bound" THEN
+     "euler connected x_vertex deleted_connected injective avoids spokes new_bound" THEN
     SUBGOAL_THEN `finite_simple_graph (V:A->bool) E`
     (LABEL_TAC "graph") THENL
      [USE_THEN "euler" MP_TAC THEN
@@ -83717,8 +83440,7 @@ let FAN_DELETE_REVERSE_SPOKE_SUCCESSOR_OF_DELETE_VERTEX = prove
   REPEAT GEN_TAC THEN SPEC_TAC(`t:num`,`t:num`) THEN
   INDUCT_TAC THENL
    [INTRO_TAC
-     "euler connected x_vertex deleted_connected injective avoids \
-      spokes rotation_order lower index" THEN
+     "euler connected x_vertex deleted_connected injective avoids spokes rotation_order lower index" THEN
     REWRITE_TAC[fan_delete_edges; fan_delete_rotation] THEN
     TRANS_TAC EQ_TRANS
      `(r:(A#A)->A#A) (x,(w:num->A) (j:num))` THEN
@@ -83731,8 +83453,7 @@ let FAN_DELETE_REVERSE_SPOKE_SUCCESSOR_OF_DELETE_VERTEX = prove
       USE_THEN "index" ACCEPT_TAC];
     POP_ASSUM(LABEL_TAC "induction") THEN
     INTRO_TAC
-     "euler connected x_vertex deleted_connected injective avoids \
-      spokes rotation_order lower index" THEN
+     "euler connected x_vertex deleted_connected injective avoids spokes rotation_order lower index" THEN
     SUBGOAL_THEN `(t:num) < j` (LABEL_TAC "strict_lower") THENL
      [ASM_ARITH_TAC;
       ALL_TAC] THEN
@@ -83829,8 +83550,7 @@ let FAN_DELETE_FORWARD_SPOKE_SUCCESSOR_OF_DELETE_VERTEX = prove
   REPEAT GEN_TAC THEN SPEC_TAC(`t:num`,`t:num`) THEN
   INDUCT_TAC THENL
    [INTRO_TAC
-     "euler connected x_vertex deleted_connected injective avoids \
-      spokes lower index" THEN
+     "euler connected x_vertex deleted_connected injective avoids spokes lower index" THEN
     REWRITE_TAC[fan_delete_edges; fan_delete_rotation] THEN
     MATCH_MP_TAC GRAPH_FACE_SUCCESSOR_PAIR THEN
     REWRITE_TAC[IN_GRAPH_DARTS; DART_EDGE_PAIR] THEN
@@ -83838,8 +83558,7 @@ let FAN_DELETE_FORWARD_SPOKE_SUCCESSOR_OF_DELETE_VERTEX = prove
     USE_THEN "index" ACCEPT_TAC;
     POP_ASSUM(LABEL_TAC "induction") THEN
     INTRO_TAC
-     "euler connected x_vertex deleted_connected injective avoids \
-      spokes lower index" THEN
+     "euler connected x_vertex deleted_connected injective avoids spokes lower index" THEN
     SUBGOAL_THEN `(t:num) < j` (LABEL_TAC "strict_lower") THENL
      [ASM_ARITH_TAC;
       ALL_TAC] THEN
@@ -84147,8 +83866,7 @@ let FAN_DELETE_EARLIER_EXITS_COFACIAL = prove
                     (x,w t)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected x_vertex deleted_connected2 vertices_large \
-    injective avoids spokes rotation_order" THEN
+   "euler connected x_vertex deleted_connected2 vertices_large injective avoids spokes rotation_order" THEN
   SUBGOAL_THEN
    `finite_simple_graph (V:A->bool) E /\
     graph_rotation E (r:(A#A)->A#A)`
@@ -84412,8 +84130,7 @@ let VERTEX_2_CONNECTED_DELETE_VERTEX_EXITS_COFACIAL = prove
                          (r(w(m - 1),x)))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected x_vertex deleted_connected2 vertices_large \
-    injective avoids spokes rotation_order neighbors positive" THEN
+   "euler connected x_vertex deleted_connected2 vertices_large injective avoids spokes rotation_order neighbors positive" THEN
   SUBGOAL_THEN
    `finite_simple_graph (V:A->bool) E /\
     graph_rotation E (r:(A#A)->A#A)`
@@ -84661,8 +84378,7 @@ let VERTEX_2_CONNECTED_DELETE_VERTEX_NEIGHBORS_ON_FACE_CYCLE = prove
               graph_neighbors E x SUBSET cyclic_vertices q n`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "euler connected x_vertex deleted_connected2 vertices_large \
-    injective avoids spokes rotation_order neighbors positive" THEN
+   "euler connected x_vertex deleted_connected2 vertices_large injective avoids spokes rotation_order neighbors positive" THEN
   SUBGOAL_THEN
    `finite_simple_graph (V:A->bool) E /\
     graph_rotation E (r:(A#A)->A#A)`
@@ -84702,8 +84418,7 @@ let VERTEX_2_CONNECTED_DELETE_VERTEX_NEIGHBORS_ON_FACE_CYCLE = prove
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[];
     INTRO_TAC
-     "@q. face_large cycle_injective start next enumeration face \
-      cycle_edges face_successors"] THEN
+     "@q. face_large cycle_injective start next enumeration face cycle_edges face_successors"] THEN
   ABBREV_TAC
    `n = CARD
          (graph_face
@@ -85534,8 +85249,7 @@ let BOUNDARY_EULER_ROTATION_TWO_FANS_STRICT = prove
                E))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "cycle boundary connected vertices u_fresh v_fresh distinct \
-    dpositive dbound" THEN
+   "cycle boundary connected vertices u_fresh v_fresh distinct dpositive dbound" THEN
   USE_THEN "cycle" MP_TAC THEN
   REWRITE_TAC[simple_graph_cycle] THEN
   INTRO_TAC "large injective edges" THEN
@@ -86054,8 +85768,7 @@ let BOUNDARY_EULER_ROTATION_SPOKE_INTERVAL = prove
         ==> euler_planar_graph (u INSERT v INSERT V) B`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "cycle boundary connected vertices u_fresh v_fresh distinct \
-    dbound edge_structure" THEN
+   "cycle boundary connected vertices u_fresh v_fresh distinct dbound edge_structure" THEN
   SUBGOAL_THEN
    `euler_planar_graph
       (u INSERT v INSERT (V:A->bool))
@@ -86309,9 +86022,7 @@ let GRAPH_KURATOWSKI_FREE_SPARSE_SPOKE_INTERVAL = prove
                      ==> ~({v,q((i + k) MOD n)} IN E)))`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "injective cycle_vertices cycle_edges \
-    u_vertex v_vertex uv u_outside v_outside edge_uv \
-    three u_nonempty v_nonempty unobstructed" THEN
+   "injective cycle_vertices cycle_edges u_vertex v_vertex uv u_outside v_outside edge_uv three u_nonempty v_nonempty unobstructed" THEN
   MP_TAC(ISPECL
    [`V:A->bool`; `E:(A->bool)->bool`;
     `q:num->A`; `n:num`; `u:A`; `v:A`]
@@ -86722,8 +86433,7 @@ let GRAPH_CONTRACT_EDGE_SPOKE_BOUNDARY_INDEX = prove
         ==> ?i. i < n /\ q i = z`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "graph u_vertex v_vertex uv boundary_neighbors \
-    z_vertex zu zv spoke" THEN
+   "graph u_vertex v_vertex uv boundary_neighbors z_vertex zu zv spoke" THEN
   SUBGOAL_THEN
    `(z:A) IN graph_neighbors (graph_contract_edges V E u v) v`
   (LABEL_TAC "contracted_neighbor") THENL
@@ -86934,8 +86644,7 @@ let BOUNDARY_EULER_ROTATION_OFFSET_SPOKE_INTERVAL = prove
         ==> euler_planar_graph (u INSERT v INSERT W) E`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "cycle boundary connected vertices u_outside v_outside uv \
-    a_positive ab b_index v_interval u_interior edge_cases" THEN
+   "cycle boundary connected vertices u_outside v_outside uv a_positive ab b_index v_interval u_interior edge_cases" THEN
   MP_TAC(ISPECL
    [`\i:num. {u:A,q((i + k) MOD n)} IN E`;
     `\i:num. {v:A,q((i + k) MOD n)} IN E`;
@@ -87195,8 +86904,7 @@ let VERTEX_3_CONNECTED_GRAPH_CONTRACT_EULER_PLANAR = prove
    VERTEX_3_CONNECTED_EULER_PLANAR_DELETE_VERTEX_FACE_CYCLE) THEN
   ASM_REWRITE_TAC[] THEN
   INTRO_TAC
-   "@s q n. deleted_rotation contracted_cycle contracted_successors \
-    boundary_neighbors" THEN
+   "@s q n. deleted_rotation contracted_cycle contracted_successors boundary_neighbors" THEN
   SUBGOAL_THEN
    `induced_subgraph_edges
       (graph_contract_edges (V:A->bool) (E:(A->bool)->bool) u v)
@@ -87606,8 +87314,7 @@ let VERTEX_3_CONNECTED_GRAPH_CONTRACT_EULER_PLANAR = prove
     (X_CHOOSE_THEN `a:num`
      (X_CHOOSE_THEN `b:num` MP_TAC)))) THENL
    [INTRO_TAC
-     "k_index uk not_vk a_positive ab b_index \
-      v_interval u_interior" THEN
+     "k_index uk not_vk a_positive ab b_index v_interval u_interior" THEN
     USE_THEN "vertices_reassembled" (SUBST1_TAC o GSYM) THEN
     MATCH_MP_TAC(ISPECL
      [`((V:A->bool) DELETE u) DELETE v`;
@@ -87619,8 +87326,7 @@ let VERTEX_3_CONNECTED_GRAPH_CONTRACT_EULER_PLANAR = prove
     ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[IN_DELETE];
     INTRO_TAC
-     "k_index vk not_uk a_positive ab b_index \
-      u_interval v_interior" THEN
+     "k_index vk not_uk a_positive ab b_index u_interval v_interior" THEN
     USE_THEN "vertices_reassembled_swapped"
      (SUBST1_TAC o GSYM) THEN
     MATCH_MP_TAC(ISPECL
@@ -88214,8 +87920,7 @@ let GRAPH_SUBDIVISION_TRANSFER_ACROSS_INSERTED_EDGE = prove
               h SUBSET G`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "subdivision vertices edges positive start finish injective fresh \
-    final_vertices final_edges" THEN
+   "subdivision vertices edges positive start finish injective fresh final_vertices final_edges" THEN
   SUBGOAL_THEN
    `(f:(A->bool)->bool) SUBSET ({u,v} INSERT E)`
   (LABEL_TAC "ambient_edges") THENL
@@ -88284,8 +87989,7 @@ let GRAPH_KURATOWSKI_OBSTRUCTION_TRANSFER_ACROSS_INSERTED_EDGE = prove
         ==> graph_kuratowski_obstruction W G`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "obstruction positive start finish injective fresh \
-    final_vertices final_edges" THEN
+   "obstruction positive start finish injective fresh final_vertices final_edges" THEN
   USE_THEN "obstruction" MP_TAC THEN
   REWRITE_TAC[graph_kuratowski_obstruction] THEN
   DISCH_THEN(DISJ_CASES_THEN2
@@ -89223,8 +88927,7 @@ let PERMUTATION_SWAP_PRESERVES_OR_MERGES_ORBIT = prove
         ==> y IN permutation_orbit (swap(a,b) o f) x`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "finite permutation a_member b_member x_member y_member distinct \
-    related" THEN
+   "finite permutation a_member b_member x_member y_member distinct related" THEN
   ASM_CASES_TAC
    `(x:A) IN permutation_orbit f a \/
     x IN permutation_orbit f b` THENL
@@ -91624,8 +91327,7 @@ let FINITE_SIMPLE_GRAPH_KURATOWSKI_FREE_EULER_PLANAR = prove
            VERTEX_2_CONNECTED_GRAPH_COMPONENT_PATH_IN) THEN
           ASM_REWRITE_TAC[] THEN
           INTRO_TAC
-           "@l q. positive start finish injective internal \
-            path_vertices path_edges" THEN
+           "@l q. positive start finish injective internal path_vertices path_edges" THEN
           USE_THEN "unobstructed" (MATCH_MP_TAC o NOT_ELIM) THEN
           MATCH_MP_TAC(ISPECL
            [`V1:A->bool`; `V:A->bool`;
@@ -91670,8 +91372,7 @@ let FINITE_SIMPLE_GRAPH_KURATOWSKI_FREE_EULER_PLANAR = prove
            VERTEX_2_CONNECTED_GRAPH_COMPONENT_PATH_IN) THEN
           ASM_REWRITE_TAC[] THEN
           INTRO_TAC
-           "@l q. positive start finish injective internal \
-            path_vertices path_edges" THEN
+           "@l q. positive start finish injective internal path_vertices path_edges" THEN
           USE_THEN "unobstructed" (MATCH_MP_TAC o NOT_ELIM) THEN
           MATCH_MP_TAC(ISPECL
            [`V2:A->bool`; `V:A->bool`;
@@ -93198,8 +92899,7 @@ let GRAPH_CONTRACT_VERTEX_BRANCH_MEMBER = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[graph_branch_model] THEN
   INTRO_TAC
-   "(_ disjoint_model _) x_vertex z_vertex u_member v_member distinct \
-    a_member" THEN
+   "(_ disjoint_model _) x_vertex z_vertex u_member v_member distinct a_member" THEN
   ASM_CASES_TAC `(a:A) = u` THENL
    [SUBGOAL_THEN `(z:A) = x` (LABEL_TAC "same_branch") THENL
      [MATCH_MP_TAC(TAUT `(~p ==> F) ==> p`) THEN
@@ -93228,8 +92928,7 @@ let GRAPH_BRANCH_MODEL_CONTRACT_SOURCE = prove
              (\z:A. B z DELETE u)`,
   REPEAT GEN_TAC THEN
   INTRO_TAC
-   "source_graph target_graph model \
-    x_vertex u_member u_not_root v_member contracted_edge" THEN
+   "source_graph target_graph model x_vertex u_member u_not_root v_member contracted_edge" THEN
   USE_THEN "model" MP_TAC THEN
   REWRITE_TAC[graph_branch_model] THEN
   INTRO_TAC "vertices_model disjoint_model edge_model" THEN

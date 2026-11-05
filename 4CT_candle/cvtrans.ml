@@ -500,10 +500,11 @@ let rec cv_simlet_conv tm =
     let a,body = dest_abs f in
     let a' = variant (frees (list_mk_comb(f, x :: rest))) a in
     let body' = vsubst [a',a] body in
-    let letc = mk_icomb(mk_const("LET",[]), mk_abs(a', list_mk_comb(
-                 mk_icomb(mk_const("LET",[]), body'), rest))) in
+    let inner = list_mk_comb(mk_icomb(mk_const("LET",[]), body'), rest) in
+    let letc = mk_icomb(mk_const("LET",[]),
+                 mk_abs(a', mk_icomb(mk_const("LET_END",[]), inner))) in
     let rhs = mk_comb(letc, x) in
-    let th = prove(mk_eq(tm, rhs), REWRITE_TAC[LET_DEF] THEN
+    let th = prove(mk_eq(tm, rhs), REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
                    CONV_TAC(DEPTH_CONV BETA_CONV) THEN REFL_TAC) in
     th
   else failwith "cv_simlet_conv";;
@@ -1039,11 +1040,29 @@ let rec cv_decode ty v =
         let tag = dest_small_numeral (rand (rand l)) in
         build (el tag nons) q;;
 
+(* the code equations reachable from a compute expression                   *)
+let cv_reach_code tm =
+  let table = map (fun th -> (fst(dest_const(fst(strip_comb(lhs(concl th))))), th))
+                  (!cv_code) in
+  let consts t = map (fun c -> fst(dest_const c))
+                   (find_terms (fun u -> is_const u &&
+                      can (assoc (fst(dest_const u))) table) t) in
+  let rec go todo seen acc =
+    match todo with
+      [] -> acc
+    | n::rest ->
+        if mem n seen then go rest seen acc else
+        let th = assoc n table in
+        go (consts (rhs(concl th)) @ rest) (n::seen) (th::acc) in
+  go (consts tm) [] [];;
+
+let cv_compute tm = compute (cv_reach_code tm) tm;;
+
 let cv_eval tm =
   let ty = type_of tm in
   let e = cv_enc_of ty in
   let th1 = cv_tr (fun _ -> failwith "") (mk_comb(e, tm)) in
-  let th2 = compute (!cv_code) (rand(concl th1)) in
+  let th2 = cv_compute (rand(concl th1)) in
   let v = rand(concl th2) in
   let x = cv_decode ty v in
   let th3 =
@@ -1052,7 +1071,7 @@ let cv_eval tm =
         if rand(concl t) = v then t else failwith ""
     with Failure _ ->
       let t1 = cv_tr (fun _ -> failwith "") (mk_comb(e, x)) in
-      TRANS t1 (compute (!cv_code) (rand(concl t1))) in
+      TRANS t1 (cv_compute (rand(concl t1))) in
   let inj = cv_inj_of ty in
   EQ_MP (SPECL [tm; x] inj) (TRANS (TRANS th1 th2) (SYM th3));;
 

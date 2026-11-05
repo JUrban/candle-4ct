@@ -16675,4 +16675,4 @@ let present11_steps = [
   (1, Similar("L0_3",10,false));
   (0, Reducible)];;
 
-Printf.printf "PRESENTATIONS_DATA: 14421 steps loaded\n%!";;
+print_string "PRESENTATIONS_DATA: 14421 steps loaded\n";;
