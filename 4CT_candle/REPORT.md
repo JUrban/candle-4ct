@@ -87,8 +87,9 @@ sized variants with the size computed beforehand.
   `SIZED_CHECK_SOUND: sized_check (cprsize (cfprog cf)) cf ==>
   check_reducible cf`; `|- check_reducible cfNNN` for each configuration.
   All 633 pass; 17,852 s of CPU in total (1-128 s per configuration,
-  measured with 6 parallel workers on a shared machine).  HOL Light's
-  sequential native Part 2 takes about 8 h 45 min.
+  measured with 6 parallel workers on a shared machine).  Native HOL Light
+  takes 18 h 47 min on this machine (see Comparison); the 8 h 45 min in
+  `4CT/make.ml` was measured on a different machine (Graviton4).
 * `unavoid_cv.ml`: the quiz tree (`THE_QUIZ_TREE_CV`, computed in 15 s,
   then used as a value), redpart (a cluster of 19 mutually recursive
   functions), the discharge rules and forks, `THE_DBOUND1_CHECK` (4.5 s),
@@ -140,11 +141,47 @@ hypotheses and `check_axioms ()` passing: make_mv.ml 3,140 s, make_part1.ml
 3,397 s, the 633 checks and make_part2.ml 17,214 s; 24,391 s (6 h 46 min)
 after hol.ml in total, checkpoints included.
 
-For comparison (hol4-four-colour benchmarks): HOL4 cv_compute takes
-5 h 33 min for the 633 configurations and 27 min for the presentation rows;
-native HOL Light 18 h 47 min and 2 h 54 min.  Profile: for cf110,
-Kernel.compute takes 93.7 s of about 96 s (HOL4: 102 s); the translation
-and the proof wrappers are negligible.
+Profile: for cf110, Kernel.compute takes 93.7 s of about 96 s (HOL4: 102 s);
+the translation and the proof wrappers are negligible.
+
+## Comparison with HOL4 and native HOL Light
+
+The HOL4 and native HOL Light figures are from `benchmarks/` in
+hol4-four-colour, measured on the same CPU model (Xeon Platinum 8173M,
+112 threads).  The Candle figures are from the clean make.ml run above.
+
+| workload | native HOL Light | HOL4 cv_compute | Candle Kernel.compute |
+|----------|------------------|-----------------|-----------------------|
+| 633 configurations | 18 h 47 min | 5 h 33 min | 4 h 47 min |
+| presentations (14,421 rows) | 2 h 54 min | 27 min | 35 min |
+| whole build | 22 h 04 min | 12 h 34 min | 6 h 48 min |
+
+Candle is about 3.9x faster than native HOL Light on the configurations and
+5x on the presentations.  Against HOL4 it takes about 14% less time on the
+configurations and 28% more on the presentations.
+
+How to read these numbers:
+
+* Each figure is one run.  The HOL Light and HOL4 runs were pinned to one
+  CPU; the Candle run was unpinned on a shared machine with another build
+  running.  The factor of 4-5 is solid; the differences from HOL4 could be
+  noise.
+* The whole-build row is not like for like.  The HOL Light and HOL4 builds
+  prove only the hypermap theorem, and their totals include project
+  compilation (and article replay for HOL4).  The Candle total covers all
+  six forms, including Multivariate, and about 11 min of checkpoints, but
+  not building Candle itself.
+* The Candle configuration figure also includes the final assembly.
+* The evaluator's effect is not isolated: the runtimes (CakeML, OCaml) and
+  the code being run also differ.  Master's `4CT/` does not run on Candle
+  as it stands, because its evaluators (`eval_compile/`, `part2_compiled.hl`,
+  `compute_fast.ml`) have not been ported, so there is no same-kernel
+  measurement.
+* Native HOL Light on OCaml 5 can run the checks in parallel in one process
+  (`4CT/README.md` reports about 22 min on 128 cores, not measured here).
+  The Candle theorems are built in one sequential session.
+* Native HOL Light does every evaluation step by kernel inference; Candle
+  relies on `Kernel.compute`, which is part of its verified kernel.
 
 ## Audit of the shared sources
 
