@@ -134,9 +134,11 @@ cauchy.ml was loaded (into a checkpoint) before planar_graph.ml rather than
 from it, so `prioritize_num ()` was called before planar_graph.ml (cauchy
 leaves the complex priority); otherwise the stages are those of make.ml.
 
-A clean run of make.ml from hol.ml in its natural order (checkpointed, run
-in parallel): make_mv.ml 3,140 s, make_part1.ml 3,397 s, Part 2 in
-progress.
+A clean run of make.ml from hol.ml in its natural order (run in parallel,
+DMTCP checkpoints between the stages) reproduced all six theorems with no
+hypotheses and `check_axioms ()` passing: make_mv.ml 3,140 s, make_part1.ml
+3,397 s, the 633 checks and make_part2.ml 17,214 s; 24,391 s (6 h 46 min)
+after hol.ml in total, checkpoints included.
 
 For comparison (hol4-four-colour benchmarks): HOL4 cv_compute takes
 5 h 33 min for the 633 configurations and 27 min for the presentation rows;
