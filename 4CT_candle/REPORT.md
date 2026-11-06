@@ -1,4 +1,4 @@
-# Four Colour Theorem on Candle — interim report
+# Four Colour Theorem on Candle — report
 
 Branch `candle-4ct` of the Candle repository (on Candle master, CakeML
 regression artefact 3660, i.e. current CakeML master).
@@ -102,16 +102,57 @@ sized variants with the size computed beforehand.
   `PROVE_HYP`.  exclude5 5 s, exclude6 62 s, exclude7 (5,299 steps)
   about 10 min.
 
-## Status
+## Result
 
-* Part 1 complete in Candle (from the Multivariate + planar_graph.ml
-  checkpoint): sections A-G, P and M in 3,590 s, including the seven
-  presentation lemmas (2,105 s), the quiz tree, the discharge bounds and the
-  Birkhoff checks; every theorem `FOUR_COLOR_*_OF_REDUCIBILITY` and
-  `FOUR_COLOR_HYPERMAP : reducibility ==> ...` is proved.
-* Part 2 (the 633 checks, all already validated separately, about 5 h of
-  Kernel.compute, on par with HOL4's cv_compute: 5 h 33 min in the
-  hol4-four-colour benchmarks) running in the same process lineage, then
-  REDUCIBILITY, the six theorems and `check_axioms ()`.
-* Profile: for cf110, Kernel.compute takes 93.7 s of about 96 s; the
-  translation and the proof wrappers are negligible.
+All six forms of the theorem of `4CT/make.ml` are proved in Candle with no
+hypotheses, and `check_axioms ()` passes (the only axioms are
+`INFINITY_AX`, `SELECT_AX` and `ETA_AX`):
+
+    FOUR_COLOR = |- !H. planar_hypermap H /\ bridgeless H ==> four_colorable H
+    FOUR_COLOR_PLANAR_GRAPH = |- !V E. planar_graph V E
+        ==> ?c. (!v. v IN V ==> c v < 4) /\ (!u v. {u,v} IN E ==> ~(c u = c v))
+    FOUR_COLOR_KURATOWSKI = |- !V E. finite_simple_graph V E /\
+        ~graph_kuratowski_obstruction V E ==> ?c. ...
+    FOUR_COLOR_WAGNER = |- !V E. finite_simple_graph V E /\
+        ~graph_wagner_obstruction V E ==> ?c. ...
+    FOUR_COLOR_MAP = |- !M. plane_map M ==> map_colorable 4 M
+    FOUR_COLOR_MAP_EXPLICIT = |- !M. (!r. r IN M ==> open r /\ connected r) /\
+        pairwise DISJOINT M ==> ?c. ...
+
+Unlike the HOL4 cv_compute port, nothing is conditional: Multivariate,
+planar_graph.ml (Kuratowski, Wagner) and the map development are all loaded
+in the same Candle session.
+
+## Timings (one core each, shared machine)
+
+The run that produced the theorems (one process lineage, DMTCP checkpoints
+between stages): hol.ml 108 s; Multivariate to moretop.ml about 40 min,
+cauchy.ml 4 min, planar_graph.ml about 25 min; Part 1 (make_part1.ml,
+sections A-G, P, M) 3,590 s, of which the presentations 2,105 s; Part 2
+(the 633 checks and the final assembly) 18,989 s (5.3 h).  In this run
+cauchy.ml was loaded (into a checkpoint) before planar_graph.ml rather than
+from it, so `prioritize_num ()` was called before planar_graph.ml (cauchy
+leaves the complex priority); otherwise the stages are those of make.ml.
+
+A clean run of make.ml from hol.ml in its natural order (checkpointed, run
+in parallel): make_mv.ml 3,140 s, make_part1.ml 3,397 s, Part 2 in
+progress.
+
+For comparison (hol4-four-colour benchmarks): HOL4 cv_compute takes
+5 h 33 min for the 633 configurations and 27 min for the presentation rows;
+native HOL Light 18 h 47 min and 2 h 54 min.  Profile: for cf110,
+Kernel.compute takes 93.7 s of about 96 s (HOL4: 102 s); the translation
+and the proof wrappers are negligible.
+
+## Audit of the shared sources
+
+`git diff master` outside `4CT_candle/`: string continuations
+(planar_graph.ml, color.ml, gtree.ml, part.ml, redpart.ml) checked
+mechanically to leave the code outside strings and the string values
+unchanged (redpart.ml: a newline instead of a continuation inside a
+define_type string); `Printf` replaced by `print_string`; geometry.ml's
+CFACE_TAC procedure (a tactic, not a statement); birkhoff.ml proves the same
+four `BIRKHOFF_CHECK_*` theorems by Kernel.compute; unavoidability.ml loads
+the Candle computation files; candle/compute.ml's `Cexp_if` on pairs as in
+current CakeML (Kernel.compute checks these definitions).  No file of
+4CT_candle uses `mk_thm`, `new_axiom` or `CHEAT_TAC`.
